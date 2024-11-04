@@ -128,7 +128,10 @@ class _SignInWithEmailState extends State<SignInWithEmail> {
     });
   } else {
     // Navigate to MapSample if the user is not deactivated
-   
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => const MapSample()),
+    );
   }
 } else {
   // Handle case where the document does not exist
