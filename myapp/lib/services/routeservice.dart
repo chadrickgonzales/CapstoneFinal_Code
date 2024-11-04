@@ -798,7 +798,7 @@ Future<List<LatLng>> _getRoute1(LatLng from, LatLng to) async {
   print('Fetching route from $from to $to.');
 
   // Replace with your Google Directions API key
-  const String apiKey = 'AIzaSyBhqi3rnTiFS6D32BIG6O6yE1kfNaLlNfQ';
+  const String apiKey = 'AIzaSyAocNg3WkX5ppmhc-vTf1IHvG75EM1Rr5k';
 
   final String url =
       'https://maps.googleapis.com/maps/api/directions/json?origin=${from.latitude},${from.longitude}&destination=${to.latitude},${to.longitude}&key=$apiKey';
@@ -869,7 +869,7 @@ List<LatLng> _decodePolyline1(String encoded) {
 
 
  Future<String> _getLocationName(LatLng location) async {
-  final apiKey = 'AIzaSyBhqi3rnTiFS6D32BIG6O6yE1kfNaLlNfQ'; // Replace with your API key
+  final apiKey = 'AIzaSyAocNg3WkX5ppmhc-vTf1IHvG75EM1Rr5k'; // Replace with your API key
   final url = 'https://maps.googleapis.com/maps/api/geocode/json?latlng=${location.latitude},${location.longitude}&key=$apiKey';
 
   final response = await http.get(Uri.parse(url));
@@ -883,7 +883,7 @@ List<LatLng> _decodePolyline1(String encoded) {
   return 'Unknown Location';
 }
 Future<String> _getEstimatedTime(LatLng from, LatLng to) async {
-  const String apiKey = 'AIzaSyBhqi3rnTiFS6D32BIG6O6yE1kfNaLlNfQ'; // Replace with your API key
+  const String apiKey = 'AIzaSyAocNg3WkX5ppmhc-vTf1IHvG75EM1Rr5k'; // Replace with your API key
   final String url = 'https://maps.googleapis.com/maps/api/directions/json?origin=${from.latitude},${from.longitude}&destination=${to.latitude},${to.longitude}&key=$apiKey';
 
   final response = await http.get(Uri.parse(url));
