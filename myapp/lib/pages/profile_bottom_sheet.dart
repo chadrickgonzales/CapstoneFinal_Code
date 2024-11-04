@@ -1538,39 +1538,54 @@ Widget _buildLibraryContent(
                                 // Create the bottom sheet state variable
                                 ItineraryInfoBottomSheetState? bottomSheetState;
 //comment
-                                // Show the bottom sheet
-                                showModalBottomSheet(
-                                  backgroundColor: Colors.transparent,
-                                  barrierColor: Colors.transparent,
-                                  context: context,
-                                  builder: (context) {
-                                    return ItineraryInfoBottomSheet(
-                                      estimatedTime: 'Calculating...',
-                                      distance: 'Calculating...',
-                                      destination: '',
-                                      routeService:
-                                          routeService, // Initial empty destination
-                                      onStateCreated: (state) {
-                                        bottomSheetState =
-                                            state; // Store the state for future updates
-                                      },
-                                      onClose: () {
-                                        // Handle close action if needed
-                                      },
-                                    );
-                                  },
-                                );
+// Define OverlayEntry
+OverlayEntry? itineraryOverlayEntry;
 
-                                // Start routing through the retrieved locations with a callback
-                                await routeService.routeThroughLocations(
-                                    locations,
-                                    (estimatedTime, distance, locationName) {
-                                  // Once the route is started, update the itinerary info bottom sheet
-                                  if (bottomSheetState != null) {
-                                    bottomSheetState!.updateRouteInfo(
-                                        estimatedTime, distance, locationName);
-                                  }
-                                });
+void showItineraryOverlay(BuildContext context) {
+  itineraryOverlayEntry = OverlayEntry(
+    builder: (context) => 
+    
+    Positioned(
+      top: 30,
+      left: 0,
+      child: SizedBox(
+            width: 300, // Set the desired width
+            height: 180,
+      child: ItineraryInfoBottomSheet(
+        estimatedTime: 'Calculating...',
+        distance: 'Calculating...',
+        destination: '',
+        routeService: routeService, // Initial empty destination
+        onStateCreated: (state) {
+          bottomSheetState = state; // Store the state for future updates
+        },
+        onClose: () {
+          itineraryOverlayEntry?.remove(); // Remove overlay on close
+          itineraryOverlayEntry = null;
+        },
+      ),
+    ),
+    ),
+  );
+  // Insert the overlay entry into the overlay
+  final overlay = Overlay.of(context);
+    if (overlay != null) {
+      overlay.insert(itineraryOverlayEntry!);
+    }
+}
+
+// Start routing and update overlay
+await routeService.routeThroughLocations(
+  locations,
+  (estimatedTime, distance, locationName) {
+    if (bottomSheetState != null) {
+      bottomSheetState!.updateRouteInfo(estimatedTime, distance, locationName);
+    }
+  },
+);
+
+// Show the overlay
+showItineraryOverlay(context);
 
                                 // Show the bottom sheet after starting the route
                               } else {
@@ -1579,10 +1594,14 @@ Widget _buildLibraryContent(
                             } catch (e) {
                               print('Error fetching places or routing: $e');
                             }
-                          },
+                          }
+                          ,
                         )
+                        
                       ],
+                      
                     ),
+                    
                     SizedBox(height: 8.0),
                     FutureBuilder<DocumentSnapshot>(
                       future: FirebaseFirestore.instance

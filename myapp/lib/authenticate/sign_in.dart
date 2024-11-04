@@ -32,30 +32,27 @@ class _SignInWithEmailState extends State<SignInWithEmail> {
           .doc(user.uid)
           .get();
 
-      if (userDoc.exists) {
-        bool isDeactivated = userDoc.data()?['isDeactivated'] ?? false;
+   if (userDoc.exists) {
+  bool isDeactivated = userDoc.data()?['isDeactivated'] ?? false;
+  
+  if (isDeactivated) {
+    // Check if deactivateMessage exists
+    String deactivateMessage = userDoc.data()?['deactivateMessage'] ?? 'Your account has been deactivated.';
+    
+    setState(() {
+      error = deactivateMessage; // Use the message from Firestore
+    });
+  } else {
+    // Navigate to MapSample if the user is not deactivated
+    
+  }
+} else {
+  // Handle case where the document does not exist
+  setState(() {
+    error = 'User not found.';
+  });
+}
 
-        if (isDeactivated) {
-          // Check if deactivateMessage exists
-          String deactivateMessage = userDoc.data()?['deactivateMessage'] ??
-              'Your account has been deactivated.';
-
-          setState(() {
-            error = deactivateMessage; // Use the message from Firestore
-          });
-        } else {
-          // Navigate to MapSample if the user is not deactivated
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const MapSample()),
-          );
-        }
-      } else {
-        // Handle case where the document does not exist
-        setState(() {
-          error = 'User not found.';
-        });
-      }
     }
   }
 
@@ -107,8 +104,7 @@ class _SignInWithEmailState extends State<SignInWithEmail> {
                 String email = _emailController.text.trim();
                 String password = _passwordController.text.trim();
 
-                var result =
-                    await _auth.signInWithEmailPassword(email, password);
+                var result = await _auth.signInWithEmailPassword(email, password);
                 if (result == null) {
                   setState(() {
                     error = 'Failed to sign in. Check your email and password.';
@@ -121,33 +117,26 @@ class _SignInWithEmailState extends State<SignInWithEmail> {
                       .get();
 
                   if (userDoc.exists) {
-                    bool isDeactivated =
-                        userDoc.data()?['isDeactivated'] ?? false;
+  bool isDeactivated = userDoc.data()?['isDeactivated'] ?? false;
+  
+  if (isDeactivated) {
+    // Check if deactivateMessage exists
+    String deactivateMessage = userDoc.data()?['deactivateMessage'] ?? 'Your account has been deactivated.';
+    
+    setState(() {
+      error = deactivateMessage; // Use the message from Firestore
+    });
+  } else {
+    // Navigate to MapSample if the user is not deactivated
+   
+  }
+} else {
+  // Handle case where the document does not exist
+  setState(() {
+    error = 'User not found.';
+  });
+}
 
-                    if (isDeactivated) {
-                      // Check if deactivateMessage exists
-                      String deactivateMessage =
-                          userDoc.data()?['deactivateMessage'] ??
-                              'Your account has been deactivated.';
-
-                      setState(() {
-                        error =
-                            deactivateMessage; // Use the message from Firestore
-                      });
-                    } else {
-                      // Navigate to MapSample if the user is not deactivated
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => const MapSample()),
-                      );
-                    }
-                  } else {
-                    // Handle case where the document does not exist
-                    setState(() {
-                      error = 'User not found.';
-                    });
-                  }
                 }
               },
               child: const Text('Sign In'),
@@ -163,8 +152,7 @@ class _SignInWithEmailState extends State<SignInWithEmail> {
                 // Navigate to RegisterWithEmailForm when "Create an Account" is clicked
                 Navigator.push(
                   context,
-                  MaterialPageRoute(
-                      builder: (context) => const RegisterWithEmailForm()),
+                  MaterialPageRoute(builder: (context) => const RegisterWithEmailForm()),
                 );
               },
               child: const Text(
