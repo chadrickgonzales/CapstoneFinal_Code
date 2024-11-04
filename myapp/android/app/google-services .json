@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "69614301418",
+    "project_id": "outopiadatabase",
+    "storage_bucket": "outopiadatabase.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:69614301418:android:947a9b4d17c8b529f46793",
+        "android_client_info": {
+          "package_name": "com.example.myapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBrgKOubqCnnkTnotw99yIxSXltmu5NqYo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
