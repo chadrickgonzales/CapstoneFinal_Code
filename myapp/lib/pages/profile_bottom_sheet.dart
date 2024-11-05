@@ -210,57 +210,42 @@ Future<void> displayBottomSheet_profile(
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                             children: [
-                              Flexible(
-                                child: FittedBox(
-                                  child: _buildOutlinedButton(
-                                    'Uploads',
-                                    Color.fromARGB(255, 177, 55, 78),
-                                    selectedButton == 'Uploads',
-                                    () {
-                                      // Correctly passing a function here
-                                      setState(() {
-                                        selectedButton = 'Uploads';
-                                      });
-                                    },
-                                    selectedBackgroundColor: Color.fromARGB(
-                                        255, 177, 55, 78), // Optional argument
-                                  ),
+                              Expanded(
+                                child: _buildOutlinedButton(
+                                  'Uploads',
+                                  Color.fromARGB(255, 177, 55, 78),
+                                  selectedButton == 'Uploads',
+                                  () {
+                                    setState(() {
+                                      selectedButton = 'Uploads';
+                                    });
+                                  },
                                 ),
                               ),
                               SizedBox(width: 16.0),
-                              Flexible(
-                                child: FittedBox(
-                                  child: _buildOutlinedButton(
-                                    'Reviews',
-                                    Color.fromARGB(255, 177, 55, 78),
-                                    selectedButton == 'Reviews',
-                                    () {
-                                      // Correctly passing a function here
-                                      setState(() {
-                                        selectedButton = 'Reviews';
-                                      });
-                                    },
-                                    selectedBackgroundColor: Color.fromARGB(
-                                        255, 177, 55, 78), // Optional argument
-                                  ),
+                              Expanded(
+                                child: _buildOutlinedButton(
+                                  'Reviews',
+                                  Color.fromARGB(255, 177, 55, 78),
+                                  selectedButton == 'Reviews',
+                                  () {
+                                    setState(() {
+                                      selectedButton = 'Reviews';
+                                    });
+                                  },
                                 ),
                               ),
                               SizedBox(width: 16.0),
-                              Flexible(
-                                child: FittedBox(
-                                  child: _buildOutlinedButton(
-                                    'Library',
-                                    Color.fromARGB(255, 177, 55, 78),
-                                    selectedButton == 'Library',
-                                    () {
-                                      // Correctly passing a function here
-                                      setState(() {
-                                        selectedButton = 'Library';
-                                      });
-                                    },
-                                    selectedBackgroundColor: Color.fromARGB(
-                                        255, 177, 55, 78), // Optional argument
-                                  ),
+                              Expanded(
+                                child: _buildOutlinedButton(
+                                  'Library',
+                                  Color.fromARGB(255, 177, 55, 78),
+                                  selectedButton == 'Library',
+                                  () {
+                                    setState(() {
+                                      selectedButton = 'Library';
+                                    });
+                                  },
                                 ),
                               ),
                             ],
@@ -351,20 +336,19 @@ Widget _buildOutlinedButton(
   return OutlinedButton(
     onPressed: onPressed,
     style: OutlinedButton.styleFrom(
-      backgroundColor: isSelected
-          ? selectedBackgroundColor
-          : Colors.transparent, // Background color based on selection
-      side: BorderSide(color: outlineColor), // Consistent outline color
+      backgroundColor:
+          isSelected ? selectedBackgroundColor : Colors.transparent,
+      side: BorderSide(color: outlineColor),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(30.0),
       ),
-      minimumSize: Size(50, 30), // Minimum button size
+      minimumSize: Size(50, 30),
     ),
     child: Text(
       text,
       style: TextStyle(
-        color: Colors.white, // Text color
-        fontSize: 12,
+        color: Colors.white,
+        fontSize: 16,
       ),
     ),
   );
@@ -920,70 +904,61 @@ Widget _buildLibraryContent(
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              IntrinsicWidth(
-                child: _buildOutlinedButton(
-                  'Pins',
+              _buildOutlinedButton(
+                'Pins',
+                Color.fromARGB(255, 132, 200, 172),
+                selectedLibraryButton == 'Pins',
+                () {
+                  setState(() {
+                    selectedLibraryButton = 'Pins';
+                    selectedListSubButton = ''; // Reset when Pins is selected
+                    isListContentClicked = false; // Reset list click state
+                  });
+                },
+                selectedBackgroundColor: Color.fromARGB(255, 132, 200, 172),
+              ),
+              _buildOutlinedButton(
+                'Lists',
+                Color.fromARGB(255, 132, 200, 172),
+                selectedLibraryButton == 'Lists',
+                () {
+                  setState(() {
+                    selectedLibraryButton = 'Lists';
+                    selectedListSubButton = '';
+                    isListContentClicked = false;
+                    isListContentClicked2 = false; // Reset list click state
+                  });
+                },
+                selectedBackgroundColor: Color.fromARGB(255, 132, 200, 172),
+              ),
+              if (selectedLibraryButton == 'Lists') ...[
+                _buildOutlinedButton(
+                  'By you',
                   Color.fromARGB(255, 132, 200, 172),
-                  selectedLibraryButton == 'Pins',
+                  selectedListSubButton == 'By you',
                   () {
                     setState(() {
-                      selectedLibraryButton = 'Pins';
-                      selectedListSubButton = ''; // Reset when Pins is selected
+                      selectedLibraryButton = 'Lists';
+                      selectedListSubButton = 'By you'; // Select 'By you'
                       isListContentClicked = false; // Reset list click state
+                      isListContentClicked2 = false;
                     });
                   },
                   selectedBackgroundColor: Color.fromARGB(255, 132, 200, 172),
                 ),
-              ),
-              IntrinsicWidth(
-                child: _buildOutlinedButton(
-                  'Lists',
+                _buildOutlinedButton(
+                  'By others',
                   Color.fromARGB(255, 132, 200, 172),
-                  selectedLibraryButton == 'Lists',
+                  selectedListSubButton == 'By others',
                   () {
                     setState(() {
                       selectedLibraryButton = 'Lists';
-                      selectedListSubButton = '';
+                      selectedListSubButton = 'By others'; // Select 'By others'
                       isListContentClicked = false;
                       isListContentClicked2 = false; // Reset list click state
                     });
                   },
                   selectedBackgroundColor: Color.fromARGB(255, 132, 200, 172),
-                ),
-              ),
-              if (selectedLibraryButton == 'Lists') ...[
-                IntrinsicWidth(
-                  child: _buildOutlinedButton(
-                    'By you',
-                    Color.fromARGB(255, 132, 200, 172),
-                    selectedListSubButton == 'By you',
-                    () {
-                      setState(() {
-                        selectedLibraryButton = 'Lists';
-                        selectedListSubButton = 'By you'; // Select 'By you'
-                        isListContentClicked = false; // Reset list click state
-                        isListContentClicked2 = false;
-                      });
-                    },
-                    selectedBackgroundColor: Color.fromARGB(255, 132, 200, 172),
-                  ),
-                ),
-                IntrinsicWidth(
-                  child: _buildOutlinedButton(
-                    'By others',
-                    Color.fromARGB(255, 132, 200, 172),
-                    selectedListSubButton == 'By others',
-                    () {
-                      setState(() {
-                        selectedLibraryButton = 'Lists';
-                        selectedListSubButton =
-                            'By others'; // Select 'By others'
-                        isListContentClicked = false;
-                        isListContentClicked2 = false; // Reset list click state
-                      });
-                    },
-                    selectedBackgroundColor: Color.fromARGB(255, 132, 200, 172),
-                  ),
                 ),
               ],
             ],
@@ -1135,8 +1110,8 @@ Widget _buildLibraryContent(
                             children: [
                               Icon(Icons.copy, color: Colors.white),
                               Text(
-                                data['name'] != null && data['name'].length > 15
-                                    ? '${data['name'].substring(0, 15)}...' // Limit to 30 characters and add ellipsis
+                                data['name'] != null && data['name'].length > 30
+                                    ? '${data['name'].substring(0, 30)}...' // Limit to 30 characters and add ellipsis
                                     : data['name'] ?? 'Unnamed List',
                                 style: TextStyle(
                                   color: Colors.white,
@@ -1276,8 +1251,8 @@ Widget _buildLibraryContent(
                                 children: [
                                   Icon(Icons.copy, color: Colors.white),
                                   Text(
-                                    listName.length > 15
-                                        ? '${listName.substring(0, 15)}...' // Limit to 30 characters and add ellipsis
+                                    listName.length > 30
+                                        ? '${listName.substring(0, 30)}...' // Limit to 30 characters and add ellipsis
                                         : listName, // Use listName from 'list' collection
                                     style: TextStyle(
                                       color: Colors.white,
@@ -1396,8 +1371,8 @@ Widget _buildLibraryContent(
                             children: [
                               Icon(Icons.copy, color: Colors.white),
                               Text(
-                                data['name'] != null && data['name'].length > 15
-                                    ? '${data['name'].substring(0, 15)}...' // Limit to 30 characters and add ellipsis
+                                data['name'] != null && data['name'].length > 30
+                                    ? '${data['name'].substring(0, 30)}...' // Limit to 30 characters and add ellipsis
                                     : data['name'] ?? 'Unnamed List',
                                 style: TextStyle(
                                   color: Colors.white,
@@ -1486,8 +1461,8 @@ Widget _buildLibraryContent(
                             Icon(Icons.copy, color: Colors.white),
                             SizedBox(width: 8.0),
                             Text(
-                              clickedListContent.length > 15
-                                  ? '${clickedListContent.substring(0, 15)}...' // Limit to 25 characters with ellipsis
+                              clickedListContent.length > 20
+                                  ? '${clickedListContent.substring(0, 20)}...' // Limit to 25 characters with ellipsis
                                   : clickedListContent,
                               style: TextStyle(
                                 color: Colors.white,
@@ -1538,54 +1513,39 @@ Widget _buildLibraryContent(
                                 // Create the bottom sheet state variable
                                 ItineraryInfoBottomSheetState? bottomSheetState;
 //comment
-// Define OverlayEntry
-OverlayEntry? itineraryOverlayEntry;
+                                // Show the bottom sheet
+                                showModalBottomSheet(
+                                  backgroundColor: Colors.transparent,
+                                  barrierColor: Colors.transparent,
+                                  context: context,
+                                  builder: (context) {
+                                    return ItineraryInfoBottomSheet(
+                                      estimatedTime: 'Calculating...',
+                                      distance: 'Calculating...',
+                                      destination: '',
+                                      routeService:
+                                          routeService, // Initial empty destination
+                                      onStateCreated: (state) {
+                                        bottomSheetState =
+                                            state; // Store the state for future updates
+                                      },
+                                      onClose: () {
+                                        // Handle close action if needed
+                                      },
+                                    );
+                                  },
+                                );
 
-void showItineraryOverlay(BuildContext context) {
-  itineraryOverlayEntry = OverlayEntry(
-    builder: (context) => 
-    
-    Positioned(
-      top: 30,
-      left: 0,
-      child: SizedBox(
-            width: 300, // Set the desired width
-            height: 180,
-      child: ItineraryInfoBottomSheet(
-        estimatedTime: 'Calculating...',
-        distance: 'Calculating...',
-        destination: '',
-        routeService: routeService, // Initial empty destination
-        onStateCreated: (state) {
-          bottomSheetState = state; // Store the state for future updates
-        },
-        onClose: () {
-          itineraryOverlayEntry?.remove(); // Remove overlay on close
-          itineraryOverlayEntry = null;
-        },
-      ),
-    ),
-    ),
-  );
-  // Insert the overlay entry into the overlay
-  final overlay = Overlay.of(context);
-    if (overlay != null) {
-      overlay.insert(itineraryOverlayEntry!);
-    }
-}
-
-// Start routing and update overlay
-await routeService.routeThroughLocations(
-  locations,
-  (estimatedTime, distance, locationName) {
-    if (bottomSheetState != null) {
-      bottomSheetState!.updateRouteInfo(estimatedTime, distance, locationName);
-    }
-  },
-);
-
-// Show the overlay
-showItineraryOverlay(context);
+                                // Start routing through the retrieved locations with a callback
+                                await routeService.routeThroughLocations(
+                                    locations,
+                                    (estimatedTime, distance, locationName) {
+                                  // Once the route is started, update the itinerary info bottom sheet
+                                  if (bottomSheetState != null) {
+                                    bottomSheetState!.updateRouteInfo(
+                                        estimatedTime, distance, locationName);
+                                  }
+                                });
 
                                 // Show the bottom sheet after starting the route
                               } else {
@@ -1594,14 +1554,10 @@ showItineraryOverlay(context);
                             } catch (e) {
                               print('Error fetching places or routing: $e');
                             }
-                          }
-                          ,
+                          },
                         )
-                        
                       ],
-                      
                     ),
-                    
                     SizedBox(height: 8.0),
                     FutureBuilder<DocumentSnapshot>(
                       future: FirebaseFirestore.instance
@@ -1952,15 +1908,11 @@ showItineraryOverlay(context);
                                                                       Text(
                                                                         username.length >
                                                                                 10
-                                                                            ? '${username.substring(0, 7)}...'
+                                                                            ? '${username.substring(0, 10)}...'
                                                                             : username,
-                                                                        style:
-                                                                            TextStyle(
-                                                                          color:
-                                                                              Colors.white,
-                                                                          fontSize:
-                                                                              7, // Adjust the font size as desired
-                                                                        ),
+                                                                        style: TextStyle(
+                                                                            color:
+                                                                                Colors.white),
                                                                         overflow:
                                                                             TextOverflow.ellipsis, // Handle overflow
                                                                       ),
@@ -2653,8 +2605,8 @@ showItineraryOverlay(context);
                             Icon(Icons.copy, color: Colors.white),
                             SizedBox(width: 8.0),
                             Text(
-                              clickedListContent.length > 15
-                                  ? '${clickedListContent.substring(0, 15)}...' // Limit to 25 characters with ellipsis
+                              clickedListContent.length > 20
+                                  ? '${clickedListContent.substring(0, 20)}...' // Limit to 25 characters with ellipsis
                                   : clickedListContent,
                               style: TextStyle(
                                 color: Colors.white,
@@ -3111,15 +3063,11 @@ showItineraryOverlay(context);
                                                                       Text(
                                                                         username.length >
                                                                                 10
-                                                                            ? '${username.substring(0, 7)}...'
+                                                                            ? '${username.substring(0, 10)}...'
                                                                             : username,
-                                                                        style:
-                                                                            TextStyle(
-                                                                          color:
-                                                                              Colors.white,
-                                                                          fontSize:
-                                                                              7, // Adjust the font size as desired
-                                                                        ),
+                                                                        style: TextStyle(
+                                                                            color:
+                                                                                Colors.white),
                                                                         overflow:
                                                                             TextOverflow.ellipsis, // Handle overflow
                                                                       ),

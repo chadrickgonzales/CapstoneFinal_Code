@@ -7,6 +7,25 @@
   "client": [
     {
       "client_info": {
+        "mobilesdk_app_id": "1:69614301418:android:aeb1950c9007a71df46793",
+        "android_client_info": {
+          "package_name": "com.chadrick.myapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBrgKOubqCnnkTnotw99yIxSXltmu5NqYo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
         "mobilesdk_app_id": "1:69614301418:android:947a9b4d17c8b529f46793",
         "android_client_info": {
           "package_name": "com.example.myapp"
@@ -15,7 +34,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyAocNg3WkX5ppmhc-vTf1IHvG75EM1Rr5k"
+          "current_key": "AIzaSyBrgKOubqCnnkTnotw99yIxSXltmu5NqYo"
         }
       ],
       "services": {

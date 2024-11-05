@@ -8,7 +8,7 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
     options: const FirebaseOptions(
-      apiKey: "AIzaSyAocNg3WkX5ppmhc-vTf1IHvG75EM1Rr5k",
+      apiKey: "AIzaSyBrgKOubqCnnkTnotw99yIxSXltmu5NqYo",
       appId: "1:69614301418:android:947a9b4d17c8b529f46793",
       messagingSenderId: "69614301418",
       projectId: "outopiadatabase",
