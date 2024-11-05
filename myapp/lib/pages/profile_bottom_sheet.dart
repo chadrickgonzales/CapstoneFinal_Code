@@ -1511,30 +1511,47 @@ Widget _buildLibraryContent(
                                 );
 
                                 // Create the bottom sheet state variable
-                                ItineraryInfoBottomSheetState? bottomSheetState;
-//comment
-                                // Show the bottom sheet
-                                showModalBottomSheet(
-                                  backgroundColor: Colors.transparent,
-                                  barrierColor: Colors.transparent,
-                                  context: context,
-                                  builder: (context) {
-                                    return ItineraryInfoBottomSheet(
-                                      estimatedTime: 'Calculating...',
-                                      distance: 'Calculating...',
-                                      destination: '',
-                                      routeService:
-                                          routeService, // Initial empty destination
-                                      onStateCreated: (state) {
-                                        bottomSheetState =
-                                            state; // Store the state for future updates
-                                      },
-                                      onClose: () {
-                                        // Handle close action if needed
-                                      },
-                                    );
-                                  },
-                                );
+                                OverlayEntry? _bottomSheetOverlayEntry;
+ItineraryInfoBottomSheetState? bottomSheetState;
+
+// Function to show the overlay
+void _showOverlay(BuildContext context) {
+  _bottomSheetOverlayEntry = OverlayEntry(
+    builder: (context) {
+      return Positioned(
+          top: 30,
+          left: 0,
+           child: SizedBox(
+            width: 300, // Set the desired width
+            height: 280,
+        child: Material(
+          color: Colors.transparent,
+          child: ItineraryInfoBottomSheet(
+            estimatedTime: 'Calculating...',
+            distance: 'Calculating...',
+            destination: '',
+            routeService: routeService,
+            onStateCreated: (state) {
+              bottomSheetState = state; // Store the state for future updates
+            },
+            onClose: () {
+             
+            },
+          ),
+        ),
+           ),
+      );
+    },
+  );
+
+  Overlay.of(context).insert(_bottomSheetOverlayEntry!);
+}
+
+// Function to hide the overlay
+
+
+// Usage
+_showOverlay(context); // Call this function to show the overlay
 
                                 // Start routing through the retrieved locations with a callback
                                 await routeService.routeThroughLocations(
