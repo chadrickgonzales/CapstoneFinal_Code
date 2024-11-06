@@ -1071,117 +1071,109 @@ Widget _buildLibraryContent(
                 ],
               ),
               StreamBuilder<QuerySnapshot>(
-                stream: FirebaseFirestore.instance
-                    .collection('list')
-                    .where('userId',
-                        isEqualTo: FirebaseAuth
-                            .instance.currentUser!.uid) // Add your filter here
-                    .snapshots(),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return Center(child: CircularProgressIndicator());
-                  }
-                  if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                    return Center(child: Text('No lists found'));
-                  }
+  stream: FirebaseFirestore.instance
+      .collection('list')
+      .where('userId', isEqualTo: FirebaseAuth.instance.currentUser!.uid) // Filter by user ID
+      .snapshots(),
+  builder: (context, snapshot) {
+    if (snapshot.connectionState == ConnectionState.waiting) {
+      return Center(child: CircularProgressIndicator());
+    }
 
-                  final documents = snapshot.data!.docs;
+    if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+      return Center(child: Text('No lists found'));
+    }
 
-                  return Column(
-                    children: documents.map((doc) {
-                      final data = doc.data() as Map<String, dynamic>;
-                      final String listId = doc.id; // Get the list ID
+    final documents = snapshot.data!.docs;
 
-                      return GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            isListContentClicked = true;
-                            clickedListContent = data['name'] ?? 'Unknown';
-                            selectedListId =
-                                listId; // Store the selected list ID
-                          });
-                        },
-                        child: Container(
-                          color: Colors.transparent,
-                          padding: const EdgeInsets.all(16.0),
-                          margin: const EdgeInsets.symmetric(vertical: 8.0),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Icon(Icons.copy, color: Colors.white),
-                              Text(
-                                data['name'] != null && data['name'].length > 30
-                                    ? '${data['name'].substring(0, 30)}...' // Limit to 30 characters and add ellipsis
-                                    : data['name'] ?? 'Unnamed List',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 16,
-                                ),
-                                maxLines:
-                                    1, // Ensure the text stays on one line
-                                overflow: TextOverflow
-                                    .ellipsis, // Add ellipsis if the text exceeds available space
-                              ),
-                              PopupMenuButton<String>(
-                                icon:
-                                    Icon(Icons.more_vert, color: Colors.white),
-                                itemBuilder: (BuildContext context) {
-                                  return [
-                                    PopupMenuItem<String>(
-                                      value: 'delete',
-                                      child: Text('Delete List'),
-                                    ),
-                                  ];
-                                },
-                                onSelected: (String value) {
-                                  if (value == 'delete') {
-                                    showDialog(
-                                      context: context,
-                                      builder: (context) => AlertDialog(
-                                        title: Text('Confirm Deletion'),
-                                        content: Text(
-                                            'Are you sure you want to delete this list?'),
-                                        actions: [
-                                          TextButton(
-                                            onPressed: () {
-                                              FirebaseFirestore.instance
-                                                  .collection(
-                                                      'list') // Adjust to your collection name
-                                                  .doc(doc
-                                                      .id) // Use the doc ID to delete the specific document
-                                                  .delete()
-                                                  .then((_) {
-                                                Navigator.of(context)
-                                                    .pop(); // Close dialog
-                                              }).catchError((error) {
-                                                print(
-                                                    'Failed to delete list: $error');
-                                              });
-                                            },
-                                            child: Text('Yes'),
-                                          ),
-                                          TextButton(
-                                            onPressed: () {
-                                              Navigator.of(context).pop();
-                                              Navigator.of(context)
-                                                  .pop(); // Close dialog
-                                            },
-                                            child: Text('No'),
-                                          ),
-                                        ],
-                                      ),
-                                    );
-                                  }
-                                },
-                              ),
-                            ],
-                          ),
+    return Column(
+      children: documents.map((doc) {
+        final data = doc.data() as Map<String, dynamic>;
+        final String listId = doc.id; // Get the list ID
+        final bool isPremade = data['premade'] ?? false; // Check if 'premade' is true
+
+        return GestureDetector(
+          onTap: () {
+            setState(() {
+              isListContentClicked = true;
+              clickedListContent = data['name'] ?? 'Unknown';
+              selectedListId = listId; // Store the selected list ID
+            });
+          },
+          child: Container(
+            color: Colors.transparent,
+            padding: const EdgeInsets.all(16.0),
+            margin: const EdgeInsets.symmetric(vertical: 8.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Icon(Icons.copy, color: Colors.white),
+                Text(
+                  data['name'] != null && data['name'].length > 30
+                      ? '${data['name'].substring(0, 30)}...' // Limit to 30 characters and add ellipsis
+                      : data['name'] ?? 'Unnamed List',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                  ),
+                  maxLines: 1, // Ensure the text stays on one line
+                  overflow: TextOverflow.ellipsis, // Add ellipsis if the text exceeds available space
+                ),
+                PopupMenuButton<String>(
+                  icon: Icon(Icons.more_vert, color: Colors.white),
+                  itemBuilder: (BuildContext context) {
+                    // Only show the delete option if 'premade' is false
+                    return [
+                      if (!isPremade)
+                        PopupMenuItem<String>(
+                          value: 'delete',
+                          child: Text('Delete List'),
+                        ),
+                    ];
+                  },
+                  onSelected: (String value) {
+                    if (value == 'delete') {
+                      showDialog(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          title: Text('Confirm Deletion'),
+                          content: Text(
+                              'Are you sure you want to delete this list?'),
+                          actions: [
+                            TextButton(
+                              onPressed: () {
+                                FirebaseFirestore.instance
+                                    .collection('list') // Adjust to your collection name
+                                    .doc(doc.id) // Use the doc ID to delete the specific document
+                                    .delete()
+                                    .then((_) {
+                                  Navigator.of(context).pop(); // Close dialog
+                                }).catchError((error) {
+                                  print('Failed to delete list: $error');
+                                });
+                              },
+                              child: Text('Yes'),
+                            ),
+                            TextButton(
+                              onPressed: () {
+                                Navigator.of(context).pop(); // Close dialog
+                              },
+                              child: Text('No'),
+                            ),
+                          ],
                         ),
                       );
-                    }).toList(),
-                  );
-                },
-              ),
+                    }
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  },
+)
             ] else if (selectedListSubButton == 'By others') ...[
               Row(
                 children: [
@@ -1641,70 +1633,88 @@ _showOverlay(context); // Call this function to show the overlay
                       }, // end of builder (for userId FutureBuilder)
                     ),
                     SizedBox(height: 8.0),
-                    StreamBuilder<QuerySnapshot>(
-                      stream: FirebaseFirestore.instance
-                          .collection('list')
-                          .doc(selectedListId)
-                          .collection('places')
-                          .snapshots(),
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState ==
-                            ConnectionState.waiting) {
-                          return Center(child: CircularProgressIndicator());
-                        }
+                  StreamBuilder<QuerySnapshot>(
+  stream: FirebaseFirestore.instance
+      .collection('list')
+      .doc(selectedListId)
+      .collection('places')
+      .snapshots(),
+  builder: (context, snapshot) {
+    if (snapshot.connectionState == ConnectionState.waiting) {
+      return Center(child: CircularProgressIndicator());
+    }
 
-                        final List<QueryDocumentSnapshot> documents =
-                            snapshot.data?.docs ?? [];
+    final List<QueryDocumentSnapshot> documents = snapshot.data?.docs ?? [];
+    
+    // Fetch the `premade` field from the parent 'list' document to determine visibility
+    return FutureBuilder<DocumentSnapshot>(
+      future: FirebaseFirestore.instance
+          .collection('list')
+          .doc(selectedListId)
+          .get(),
+      builder: (context, listSnapshot) {
+        if (listSnapshot.connectionState == ConnectionState.waiting) {
+          return Center(child: CircularProgressIndicator());
+        }
 
-                        return Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Row(
-                              children: [
-                                IconButton(
-                                  icon: Icon(Icons.delete, color: Colors.white),
-                                  onPressed: () {
-                                    // Show confirmation dialog
-                                    showDialog(
-                                      context: context,
-                                      builder: (BuildContext context) {
-                                        return AlertDialog(
-                                          title: Text('Delete List'),
-                                          content: Text(
-                                              'Are you sure you want to delete this list?'),
-                                          actions: [
-                                            TextButton(
-                                              onPressed: () {
-                                                Navigator.of(context)
-                                                    .pop(); // Close dialog
-                                              },
-                                              child: Text('No'),
-                                            ),
-                                            TextButton(
-                                              onPressed: () async {
-                                                // Delete the list from Firestore
-                                                await FirebaseFirestore.instance
-                                                    .collection('list')
-                                                    .doc(selectedListId)
-                                                    .delete();
+        if (!listSnapshot.hasData || !listSnapshot.data!.exists) {
+          return Center(child: Text('No list found'));
+        }
 
-                                                Navigator.of(context)
-                                                    .pop(); // Close dialog
-                                                Navigator.of(context).pop();
-                                              },
-                                              child: Text('Yes'),
-                                            ),
-                                          ],
-                                        );
-                                      },
-                                    );
-                                  },
-                                ),
-                                SizedBox(width: 4.0),
-                                IconButton(
-                                  icon: Icon(Icons.share, color: Colors.white),
-                                  onPressed: () {
-                                    TextEditingController searchController =
+        final data = listSnapshot.data!.data() as Map<String, dynamic>;
+        final bool isPremade = data['premade'] ?? false; // Get the premade field
+
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              children: [
+                // Conditionally hide the delete icon if 'premade' is true
+                if (!isPremade)
+                  IconButton(
+                    icon: Icon(Icons.delete, color: Colors.white),
+                    onPressed: () {
+                      // Show confirmation dialog
+                      showDialog(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return AlertDialog(
+                            title: Text('Delete List'),
+                            content: Text(
+                                'Are you sure you want to delete this list?'),
+                            actions: [
+                              TextButton(
+                                onPressed: () {
+                                  Navigator.of(context).pop(); // Close dialog
+                                },
+                                child: Text('No'),
+                              ),
+                              TextButton(
+                                onPressed: () async {
+                                  // Delete the list from Firestore
+                                  await FirebaseFirestore.instance
+                                      .collection('list')
+                                      .doc(selectedListId)
+                                      .delete();
+
+                                  Navigator.of(context).pop(); // Close dialog
+                                  Navigator.of(context).pop();
+                                },
+                                child: Text('Yes'),
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                    },
+                  ),
+                SizedBox(width: 4.0),
+                // Conditionally hide the share icon if 'premade' is true
+                if (!isPremade)
+                  IconButton(
+                    icon: Icon(Icons.share, color: Colors.white),
+                    onPressed: () {
+                      TextEditingController searchController =
                                         TextEditingController();
                                     List<DocumentSnapshot> userList = [];
                                     List<DocumentSnapshot> filteredUserList =
@@ -2089,142 +2099,123 @@ _showOverlay(context); // Call this function to show the overlay
                                         );
                                       },
                                     );
-                                  },
-                                ),
-                                IconButton(
-                                  icon: FutureBuilder<DocumentSnapshot>(
-                                    future: FirebaseFirestore.instance
-                                        .collection('listbyothers')
-                                        .doc(selectedListId)
-                                        .get(),
-                                    builder: (context, snapshot) {
-                                      if (snapshot.connectionState ==
-                                          ConnectionState.waiting) {
-                                        return Icon(Icons.bookmark_outline,
-                                            color: Colors
-                                                .white); // Show unsaved icon while loading
-                                      }
-                                      if (snapshot.hasData &&
-                                          snapshot.data!.exists) {
-                                        return Icon(Icons.bookmark,
-                                            color: Colors
-                                                .white); // Show saved icon if bookmarked
-                                      }
-                                      return Icon(Icons.bookmark_outline,
-                                          color: Colors
-                                              .white); // Show unsaved icon if not bookmarked
-                                    },
-                                  ),
-                                  onPressed: () async {
-                                    final bookmarkDocRef = FirebaseFirestore
-                                        .instance
-                                        .collection('listbyothers')
-                                        .doc(selectedListId);
-
-                                    final bookmarkSnapshot =
-                                        await bookmarkDocRef.get();
-
-                                    if (bookmarkSnapshot.exists) {
-                                      // If already bookmarked, remove the bookmark
-                                      await bookmarkDocRef.delete();
-                                    } else {
-                                      // If not bookmarked, add it to listbyothers
-                                      await bookmarkDocRef.set({
-                                        'listId': selectedListId,
-                                        'userId': FirebaseAuth
-                                            .instance
-                                            .currentUser!
-                                            .uid, // Store current user's ID
-                                      });
-                                    }
-                                    setState(
-                                        () {}); // Trigger a rebuild to update the icon
-                                  },
-                                ),
-                                SizedBox(width: 4.0),
-                                IconButton(
-                                  icon: Icon(
-                                    isPrivate ? Icons.lock : Icons.lock_open,
-                                    color: Colors.white,
-                                  ),
-                                  onPressed: () async {
-                                    try {
-                                      final firestore =
-                                          FirebaseFirestore.instance;
-                                      final listDoc = firestore
-                                          .collection('list')
-                                          .doc(selectedListId);
-
-                                      // Toggle the 'isPrivate' field
-                                      await listDoc
-                                          .update({'isPrivate': !isPrivate});
-
-                                      setState(() {
-                                        isPrivate = !isPrivate;
-                                      });
-                                    } catch (e) {
-                                      print(
-                                          'Error updating privacy status: $e');
-                                    }
-                                  },
-                                ),
-                              ],
-                            ),
-                            // Conditionally render the circle and plus button
-                            if (documents.isNotEmpty)
-                              InkWell(
-                                onTap: () {
-                                  try {
-                                    if (selectedListId != null &&
-                                        selectedListId!.isNotEmpty) {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) =>
-                                              _buildAddToListContent(
-                                                  toggleAddToListContent,
-                                                  selectedListId!,
-                                                  context),
-                                        ),
-                                      );
-                                    } else {
-                                      ScaffoldMessenger.of(context)
-                                          .showSnackBar(
-                                        SnackBar(
-                                            content: Text('No list selected')),
-                                      );
-                                    }
-                                  } catch (e) {
-                                    print('Error occurred: $e');
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                          content: Text('An error occurred')),
-                                    );
-                                  }
-                                },
-                                child: Container(
-                                  width: 28.0,
-                                  height: 28.0,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    border: Border.all(
-                                      color: Colors.white,
-                                      width: 1.5,
-                                    ),
-                                  ),
-                                  child: Center(
-                                    child: Icon(
-                                      Icons.add,
-                                      color: Colors.white,
-                                      size: 16.0,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                          ],
-                        );
+                    },
+                  ),
+                // Conditionally hide the bookmark icon if 'premade' is true
+                if (!isPremade)
+                  IconButton(
+                    icon: FutureBuilder<DocumentSnapshot>(
+                      future: FirebaseFirestore.instance
+                          .collection('listbyothers')
+                          .doc(selectedListId)
+                          .get(),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState == ConnectionState.waiting) {
+                          return Icon(Icons.bookmark_outline, color: Colors.white); // Show unsaved icon while loading
+                        }
+                        if (snapshot.hasData && snapshot.data!.exists) {
+                          return Icon(Icons.bookmark, color: Colors.white); // Show saved icon if bookmarked
+                        }
+                        return Icon(Icons.bookmark_outline, color: Colors.white); // Show unsaved icon if not bookmarked
                       },
                     ),
+                    onPressed: () async {
+                      final bookmarkDocRef = FirebaseFirestore.instance
+                          .collection('listbyothers')
+                          .doc(selectedListId);
+
+                      final bookmarkSnapshot = await bookmarkDocRef.get();
+
+                      if (bookmarkSnapshot.exists) {
+                        // If already bookmarked, remove the bookmark
+                        await bookmarkDocRef.delete();
+                      } else {
+                        // If not bookmarked, add it to listbyothers
+                        await bookmarkDocRef.set({
+                          'listId': selectedListId,
+                          'userId': FirebaseAuth.instance.currentUser!.uid, // Store current user's ID
+                        });
+                      }
+                      setState(() {}); // Trigger a rebuild to update the icon
+                    },
+                  ),
+                SizedBox(width: 4.0),
+                // Conditionally hide the lock/unlock icon if 'premade' is true
+                if (!isPremade)
+                  IconButton(
+                    icon: Icon(
+                      isPrivate ? Icons.lock : Icons.lock_open,
+                      color: Colors.white,
+                    ),
+                    onPressed: () async {
+                      try {
+                        final firestore = FirebaseFirestore.instance;
+                        final listDoc = firestore.collection('list').doc(selectedListId);
+
+                        // Toggle the 'isPrivate' field
+                        await listDoc.update({'isPrivate': !isPrivate});
+
+                        setState(() {
+                          isPrivate = !isPrivate;
+                        });
+                      } catch (e) {
+                        print('Error updating privacy status: $e');
+                      }
+                    },
+                  ),
+              ],
+            ),
+            // Conditionally render the circle and plus button if there are places in the list
+            if (documents.isNotEmpty)
+              InkWell(
+                onTap: () {
+                  try {
+                    if (selectedListId != null && selectedListId!.isNotEmpty) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              _buildAddToListContent(toggleAddToListContent, selectedListId!, context),
+                        ),
+                      );
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('No list selected')),
+                      );
+                    }
+                  } catch (e) {
+                    print('Error occurred: $e');
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('An error occurred')),
+                    );
+                  }
+                },
+ child: Visibility(
+                        visible: !isPremade, // Hide the container and icon if 'premade' is true
+                        child: Container(
+                          width: 28.0,
+                          height: 28.0,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white, width: 1.5),
+                          ),
+                          child: Center(
+                            child: Icon(
+                              Icons.add,
+                              color: Colors.white,
+                              size: 16.0,
+                    ),
+                  ),
+                ),
+              ),
+              ),
+          ],
+        );
+      },
+    );
+  },
+),
+
                     Divider(color: Colors.white),
                     SizedBox(height: 24.0),
                     StreamBuilder<QuerySnapshot>(
@@ -2305,154 +2296,157 @@ _showOverlay(context); // Call this function to show the overlay
                             ],
                           );
                         } else {
-                          return SingleChildScrollView(
-                            scrollDirection: Axis.horizontal,
-                            child: Row(
-                              children: documents.map((doc) {
-                                return Padding(
-                                  padding:
-                                      EdgeInsets.symmetric(horizontal: 8.0),
-                                  child: GestureDetector(
-                                    child: Container(
-                                      height: 320,
-                                      width: 320.0,
-                                      padding: EdgeInsets.all(16.0),
-                                      decoration: BoxDecoration(
-                                        color:
-                                            Color.fromARGB(255, 90, 111, 132),
-                                        borderRadius:
-                                            BorderRadius.circular(12.0),
-                                      ),
-                                      child: Stack(
-                                        children: [
-                                          Positioned(
-                                            top: 16.0,
-                                            left: 16.0,
-                                            child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                Text(
-                                                  doc['name'] ?? 'Place Name',
-                                                  style: TextStyle(
-                                                    color: Colors.white,
-                                                    fontSize: 18.0,
-                                                    fontWeight: FontWeight.bold,
-                                                  ),
-                                                ),
-                                                SizedBox(height: 8.0),
-                                                Text(
-                                                  'Address',
-                                                  style: TextStyle(
-                                                    color: Colors.white,
-                                                    fontSize: 14.0,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                          Positioned(
-                                            top: 80.0,
-                                            left: 0.0,
-                                            right: 0.0,
-                                            child: Container(
-                                              width: 200.0,
-                                              height: 200.0,
-                                              decoration: BoxDecoration(
-                                                color: Colors.black,
-                                                borderRadius:
-                                                    BorderRadius.circular(12.0),
-                                              ),
-                                              child: doc['imageUrl'] != null &&
-                                                      doc['imageUrl'] != ''
-                                                  ? ClipRRect(
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              12.0),
-                                                      child: Image.network(
-                                                        doc['imageUrl'],
-                                                        fit: BoxFit.cover,
-                                                      ),
-                                                    )
-                                                  : Center(
-                                                      child: Text(
-                                                        'Placeholder Image',
-                                                        style: TextStyle(
-                                                          color: Colors.white,
-                                                          fontSize: 16.0,
-                                                          fontWeight:
-                                                              FontWeight.bold,
-                                                        ),
-                                                      ),
-                                                    ),
-                                            ),
-                                          ),
-                                          Positioned(
-                                            top: 8.0,
-                                            right: 8.0,
-                                            child: IconButton(
-                                              icon: Icon(
-                                                Icons.delete,
-                                                color: Colors.white,
-                                              ),
-                                              onPressed: () {
-                                                // Show confirmation dialog before deletion
-                                                showDialog(
-                                                  context: context,
-                                                  builder: (context) =>
-                                                      AlertDialog(
-                                                    title: Text(
-                                                        'Confirm Deletion'),
-                                                    content: Text(
-                                                        'Are you sure you want to delete this place?'),
-                                                    actions: [
-                                                      TextButton(
-                                                        onPressed: () {
-                                                          // Perform deletion
-                                                          FirebaseFirestore
-                                                              .instance
-                                                              .collection(
-                                                                  'list')
-                                                              .doc(
-                                                                  selectedListId)
-                                                              .collection(
-                                                                  'places')
-                                                              .doc(doc.id)
-                                                              .delete()
-                                                              .then((_) {
-                                                            Navigator.of(
-                                                                    context)
-                                                                .pop(); // Close dialog
-                                                          }).catchError(
-                                                                  (error) {
-                                                            // Handle error if needed
-                                                            print(
-                                                                'Failed to delete place: $error');
-                                                          });
-                                                        },
-                                                        child: Text('Delete'),
-                                                      ),
-                                                      TextButton(
-                                                        onPressed: () {
-                                                          Navigator.of(context)
-                                                              .pop(); // Close dialog
-                                                        },
-                                                        child: Text('Cancel'),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                );
-                                              },
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                );
-                              }).toList(),
+                         return SingleChildScrollView(
+  scrollDirection: Axis.horizontal,
+  child: Row(
+    children: documents.map((doc) {
+      return Padding(
+        padding: EdgeInsets.symmetric(horizontal: 8.0),
+        child: GestureDetector(
+          child: Container(
+            height: 320,
+            width: 320.0,
+            padding: EdgeInsets.all(16.0),
+            decoration: BoxDecoration(
+              color: Color.fromARGB(255, 90, 111, 132),
+              borderRadius: BorderRadius.circular(12.0),
+            ),
+            child: Stack(
+              children: [
+                Positioned(
+                  top: 16.0,
+                  left: 16.0,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        doc['name'] ?? 'Place Name',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 18.0,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      SizedBox(height: 8.0),
+                      Text(
+                        'Address',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 14.0,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Positioned(
+                  top: 80.0,
+                  left: 0.0,
+                  right: 0.0,
+                  child: Container(
+                    width: 200.0,
+                    height: 200.0,
+                    decoration: BoxDecoration(
+                      color: Colors.black,
+                      borderRadius: BorderRadius.circular(12.0),
+                    ),
+                    child: doc['imageUrl'] != null && doc['imageUrl'] != ''
+                        ? ClipRRect(
+                            borderRadius: BorderRadius.circular(12.0),
+                            child: Image.network(
+                              doc['imageUrl'],
+                              fit: BoxFit.cover,
                             ),
-                          );
+                          )
+                        : Center(
+                            child: Text(
+                              'Placeholder Image',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 16.0,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                  ),
+                ),
+                // Fetch the 'premade' field from the parent list document
+                FutureBuilder<DocumentSnapshot>(
+                  future: FirebaseFirestore.instance
+                      .collection('list')
+                      .doc(selectedListId)
+                      .get(),
+                  builder: (context, listSnapshot) {
+                    if (listSnapshot.connectionState == ConnectionState.waiting) {
+                      return Center(child: CircularProgressIndicator());
+                    }
+
+                    if (!listSnapshot.hasData || !listSnapshot.data!.exists) {
+                      return Container(); // Or handle no data case
+                    }
+
+                    final data = listSnapshot.data!.data() as Map<String, dynamic>;
+                    final bool isPremade = data['premade'] ?? false; // Get the 'premade' field
+
+                    return Positioned(
+                      top: 8.0,
+                      right: 8.0,
+                      child: Visibility(
+                        visible: !isPremade, // Hide the delete icon if 'premade' is true
+                        child: IconButton(
+                          icon: Icon(
+                            Icons.delete,
+                            color: Colors.white,
+                          ),
+                          onPressed: () {
+                            // Show confirmation dialog before deletion
+                            showDialog(
+                              context: context,
+                              builder: (context) => AlertDialog(
+                                title: Text('Confirm Deletion'),
+                                content: Text(
+                                    'Are you sure you want to delete this place?'),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () {
+                                      // Perform deletion
+                                      FirebaseFirestore.instance
+                                          .collection('list')
+                                          .doc(selectedListId)
+                                          .collection('places')
+                                          .doc(doc.id)
+                                          .delete()
+                                          .then((_) {
+                                        Navigator.of(context).pop(); // Close dialog
+                                      }).catchError((error) {
+                                        // Handle error if needed
+                                        print('Failed to delete place: $error');
+                                      });
+                                    },
+                                    child: Text('Delete'),
+                                  ),
+                                  TextButton(
+                                    onPressed: () {
+                                      Navigator.of(context).pop(); // Close dialog
+                                    },
+                                    child: Text('Cancel'),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }).toList(),
+  ),
+);
                         }
                       },
                     ),

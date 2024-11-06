@@ -7,14 +7,23 @@ class AuthService {
   FirebaseAuth get _auth => FirebaseAuth.instanceFor(app: Firebase.app());
   FirebaseFirestore get _db => FirebaseFirestore.instanceFor(app: Firebase.app());
 
-  // Sign in with email and password
+  // Sign in with email and password and check if the email is verified
   Future<User?> signInWithEmailPassword(String email, String password) async {
     try {
       UserCredential result = await _auth.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
-      return result.user;
+      User? user = result.user;
+
+      // Check if the user's email is verified
+      if (user != null && !user.emailVerified) {
+        // If not verified, send the verification email and return null
+        await user.sendEmailVerification();
+        return null;
+      }
+
+      return user;
     } catch (e) {
       print(e.toString());
       return null;
@@ -114,9 +123,6 @@ class AuthService {
     }
   }
 
-  // Sign out
-
-
   // Store user data in Firestore
   Future<void> _storeUserData(String userId, String email, String username, String phoneNumber) async {
     try {
@@ -130,6 +136,19 @@ class AuthService {
     }
   }
 
-  // Sign in with email and password and check if email is verified
-  
+  // Send password reset email
+  Future<void> sendPasswordResetEmail(String email) async {
+    try {
+      await _auth.sendPasswordResetEmail(email: email);
+    } catch (e) {
+      print('Error sending password reset email: $e');
+    }
+  }
+
+  // Check if the user is authenticated and email is verified
+  Future<bool> isUserVerified() async {
+    User? user = _auth.currentUser;
+    if (user == null) return false;
+    return user.emailVerified;
+  }
 }

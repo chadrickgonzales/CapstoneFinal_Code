@@ -23,36 +23,46 @@ class _SignInWithEmailState extends State<SignInWithEmail> {
     _checkUserSignedIn();
   }
 
+  // Check if the user is signed in and if their email is verified
   void _checkUserSignedIn() async {
-    // Check if a user is already signed in using the token
     var user = _auth.getCurrentUser();
     if (user != null) {
-      final userDoc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .get();
+      // If user is signed in, check if email is verified
+      if (user.emailVerified) {
+        // If verified, check if user is deactivated
+        final userDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .get();
 
-   if (userDoc.exists) {
-  bool isDeactivated = userDoc.data()?['isDeactivated'] ?? false;
-  
-  if (isDeactivated) {
-    // Check if deactivateMessage exists
-    String deactivateMessage = userDoc.data()?['deactivateMessage'] ?? 'Your account has been deactivated.';
-    
-    setState(() {
-      error = deactivateMessage; // Use the message from Firestore
-    });
-  } else {
-    // Navigate to MapSample if the user is not deactivated
-    
-  }
-} else {
-  // Handle case where the document does not exist
-  setState(() {
-    error = 'User not found.';
-  });
-}
+        if (userDoc.exists) {
+          bool isDeactivated = userDoc.data()?['isDeactivated'] ?? false;
 
+          if (isDeactivated) {
+            // User is deactivated, show the deactivation message
+            String deactivateMessage = userDoc.data()?['deactivateMessage'] ?? 'Your account has been deactivated.';
+            setState(() {
+              error = deactivateMessage;
+            });
+          } else {
+            // User is not deactivated, navigate to MapSample
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const MapSample()),
+            );
+          }
+        } else {
+          setState(() {
+            error = 'User not found.';
+          });
+        }
+      } else {
+        // Email is not verified, prompt user to verify
+        setState(() {
+          error = 'Please verify your email before signing in.';
+        });
+        await user.sendEmailVerification(); // Resend verification email
+      }
     }
   }
 
@@ -105,38 +115,46 @@ class _SignInWithEmailState extends State<SignInWithEmail> {
                 String password = _passwordController.text.trim();
 
                 var result = await _auth.signInWithEmailPassword(email, password);
+
                 if (result == null) {
                   setState(() {
                     error = 'Failed to sign in. Check your email and password.';
                   });
                 } else {
-                  // Check if the account is deactivated in Firestore
-                  final userDoc = await FirebaseFirestore.instance
-                      .collection('users')
-                      .doc(result.uid)
-                      .get();
+                  if (!result.emailVerified) {
+                    // If email is not verified, prompt user
+                    setState(() {
+                      error = 'Please verify your email before signing in.';
+                    });
+                    await result.sendEmailVerification();  // Resend verification email
+                  } else {
+                    // Check if the account is deactivated in Firestore
+                    final userDoc = await FirebaseFirestore.instance
+                        .collection('users')
+                        .doc(result.uid)
+                        .get();
 
-                  if (userDoc.exists) {
-  bool isDeactivated = userDoc.data()?['isDeactivated'] ?? false;
-  
-  if (isDeactivated) {
-    // Check if deactivateMessage exists
-    String deactivateMessage = userDoc.data()?['deactivateMessage'] ?? 'Your account has been deactivated.';
-    
-    setState(() {
-      error = deactivateMessage; // Use the message from Firestore
-    });
-  } else {
-    // Navigate to MapSample if the user is not deactivated
-   
-  }
-} else {
-  // Handle case where the document does not exist
-  setState(() {
-    error = 'User not found.';
-  });
-}
+                    if (userDoc.exists) {
+                      bool isDeactivated = userDoc.data()?['isDeactivated'] ?? false;
 
+                      if (isDeactivated) {
+                        String deactivateMessage = userDoc.data()?['deactivateMessage'] ?? 'Your account has been deactivated.';
+                        setState(() {
+                          error = deactivateMessage;
+                        });
+                      } else {
+                        // Navigate to MapSample if the user is not deactivated
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(builder: (context) => const MapSample()),
+                        );
+                      }
+                    } else {
+                      setState(() {
+                        error = 'User not found.';
+                      });
+                    }
+                  }
                 }
               },
               child: const Text('Sign In'),
@@ -149,7 +167,6 @@ class _SignInWithEmailState extends State<SignInWithEmail> {
             const SizedBox(height: 20.0),
             TextButton(
               onPressed: () {
-                // Navigate to RegisterWithEmailForm when "Create an Account" is clicked
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => const RegisterWithEmailForm()),
