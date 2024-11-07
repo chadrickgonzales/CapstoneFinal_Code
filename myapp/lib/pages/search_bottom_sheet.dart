@@ -847,6 +847,7 @@ Widget _buildPlaceDetails(Map<String, dynamic> place) {
                     final placeIdFromPlaceCollection = placeDoc.data()?['placeId'];
 
                     await _firestore.collection('ratings').add({
+                      'placeName': _selectedPlace!['name'] ?? _selectedPlace!['placeName'],
                       'userId': currentUser.uid,
                       'username': username,
                       'place_id': _selectedPlace!['place_id'],

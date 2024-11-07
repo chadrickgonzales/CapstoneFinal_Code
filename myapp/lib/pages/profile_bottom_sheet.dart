@@ -210,42 +210,57 @@ Future<void> displayBottomSheet_profile(
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                             children: [
-                              Expanded(
-                                child: _buildOutlinedButton(
-                                  'Uploads',
-                                  Color.fromARGB(255, 177, 55, 78),
-                                  selectedButton == 'Uploads',
-                                  () {
-                                    setState(() {
-                                      selectedButton = 'Uploads';
-                                    });
-                                  },
+                              Flexible(
+                                child: FittedBox(
+                                  child: _buildOutlinedButton(
+                                    'Uploads',
+                                    Color.fromARGB(255, 177, 55, 78),
+                                    selectedButton == 'Uploads',
+                                    () {
+                                      // Correctly passing a function here
+                                      setState(() {
+                                        selectedButton = 'Uploads';
+                                      });
+                                    },
+                                    selectedBackgroundColor: Color.fromARGB(
+                                        255, 177, 55, 78), // Optional argument
+                                  ),
                                 ),
                               ),
                               SizedBox(width: 16.0),
-                              Expanded(
-                                child: _buildOutlinedButton(
-                                  'Reviews',
-                                  Color.fromARGB(255, 177, 55, 78),
-                                  selectedButton == 'Reviews',
-                                  () {
-                                    setState(() {
-                                      selectedButton = 'Reviews';
-                                    });
-                                  },
+                              Flexible(
+                                child: FittedBox(
+                                  child: _buildOutlinedButton(
+                                    'Reviews',
+                                    Color.fromARGB(255, 177, 55, 78),
+                                    selectedButton == 'Reviews',
+                                    () {
+                                      // Correctly passing a function here
+                                      setState(() {
+                                        selectedButton = 'Reviews';
+                                      });
+                                    },
+                                    selectedBackgroundColor: Color.fromARGB(
+                                        255, 177, 55, 78), // Optional argument
+                                  ),
                                 ),
                               ),
                               SizedBox(width: 16.0),
-                              Expanded(
-                                child: _buildOutlinedButton(
-                                  'Library',
-                                  Color.fromARGB(255, 177, 55, 78),
-                                  selectedButton == 'Library',
-                                  () {
-                                    setState(() {
-                                      selectedButton = 'Library';
-                                    });
-                                  },
+                              Flexible(
+                                child: FittedBox(
+                                  child: _buildOutlinedButton(
+                                    'Library',
+                                    Color.fromARGB(255, 177, 55, 78),
+                                    selectedButton == 'Library',
+                                    () {
+                                      // Correctly passing a function here
+                                      setState(() {
+                                        selectedButton = 'Library';
+                                      });
+                                    },
+                                    selectedBackgroundColor: Color.fromARGB(
+                                        255, 177, 55, 78), // Optional argument
+                                  ),
                                 ),
                               ),
                             ],
@@ -336,19 +351,20 @@ Widget _buildOutlinedButton(
   return OutlinedButton(
     onPressed: onPressed,
     style: OutlinedButton.styleFrom(
-      backgroundColor:
-          isSelected ? selectedBackgroundColor : Colors.transparent,
-      side: BorderSide(color: outlineColor),
+      backgroundColor: isSelected
+          ? selectedBackgroundColor
+          : Colors.transparent, // Background color based on selection
+      side: BorderSide(color: outlineColor), // Consistent outline color
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(30.0),
       ),
-      minimumSize: Size(50, 30),
+      minimumSize: Size(50, 30), // Minimum button size
     ),
     child: Text(
       text,
       style: TextStyle(
-        color: Colors.white,
-        fontSize: 16,
+        color: Colors.white, // Text color
+        fontSize: 12,
       ),
     ),
   );
@@ -2667,30 +2683,47 @@ _showOverlay(context); // Call this function to show the overlay
                                 );
 
                                 // Create the bottom sheet state variable
-                                ItineraryInfoBottomSheetState? bottomSheetState;
-//comment
-                                // Show the bottom sheet
-                                showModalBottomSheet(
-                                  backgroundColor: Colors.transparent,
-                                  barrierColor: Colors.transparent,
-                                  context: context,
-                                  builder: (context) {
-                                    return ItineraryInfoBottomSheet(
-                                      estimatedTime: 'Calculating...',
-                                      distance: 'Calculating...',
-                                      destination: '',
-                                      routeService:
-                                          routeService, // Initial empty destination
-                                      onStateCreated: (state) {
-                                        bottomSheetState =
-                                            state; // Store the state for future updates
-                                      },
-                                      onClose: () {
-                                        // Handle close action if needed
-                                      },
-                                    );
-                                  },
-                                );
+                                OverlayEntry? _bottomSheetOverlayEntry;
+ItineraryInfoBottomSheetState? bottomSheetState;
+
+// Function to show the overlay
+void _showOverlay(BuildContext context) {
+  _bottomSheetOverlayEntry = OverlayEntry(
+    builder: (context) {
+      return Positioned(
+          top: 30,
+          left: 0,
+           child: SizedBox(
+            width: 300, // Set the desired width
+            height: 280,
+        child: Material(
+          color: Colors.transparent,
+          child: ItineraryInfoBottomSheet(
+            estimatedTime: 'Calculating...',
+            distance: 'Calculating...',
+            destination: '',
+            routeService: routeService,
+            onStateCreated: (state) {
+              bottomSheetState = state; // Store the state for future updates
+            },
+            onClose: () {
+             
+            },
+          ),
+        ),
+           ),
+      );
+    },
+  );
+
+  Overlay.of(context).insert(_bottomSheetOverlayEntry!);
+}
+
+// Function to hide the overlay
+
+
+// Usage
+_showOverlay(context); // Call this function to show the overlay
 
                                 // Start routing through the retrieved locations with a callback
                                 await routeService.routeThroughLocations(
@@ -2781,7 +2814,7 @@ _showOverlay(context); // Call this function to show the overlay
                     SizedBox(height: 8.0),
                     StreamBuilder<QuerySnapshot>(
                       stream: FirebaseFirestore.instance
-                          .collection('listbyothers')
+                          .collection('list')
                           .doc(selectedListId)
                           .collection('places')
                           .snapshots(),
@@ -2803,7 +2836,7 @@ _showOverlay(context); // Call this function to show the overlay
                                 IconButton(
                                   icon: FutureBuilder<DocumentSnapshot>(
                                     future: FirebaseFirestore.instance
-                                        .collection('listbyothers')
+                                        .collection('list')
                                         .doc(selectedListId)
                                         .get(),
                                     builder: (context, snapshot) {
@@ -2827,7 +2860,7 @@ _showOverlay(context); // Call this function to show the overlay
                                   onPressed: () async {
                                     final bookmarkDocRef = FirebaseFirestore
                                         .instance
-                                        .collection('listbyothers')
+                                        .collection('list')
                                         .doc(selectedListId);
 
                                     final bookmarkSnapshot =
@@ -3711,7 +3744,7 @@ Widget _buildAlternateContent(VoidCallback toggleContent) {
   int _selectedDay = 1;
   String _selectedMonth = 'Jan';
   int _selectedYear = 2024;
-  bool _isPrivate = true;
+  bool _isPrivate = false;
 
   // Function to format the date
   String _formatDate() {
@@ -3800,100 +3833,7 @@ Widget _buildAlternateContent(VoidCallback toggleContent) {
               ),
             ),
           ),
-          SizedBox(height: 16),
-          Text(
-            'Date',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 14,
-            ),
-          ),
-          SizedBox(height: 8),
-          Container(
-            height: 180,
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.white),
-              borderRadius: BorderRadius.circular(4),
-              color: Colors.transparent,
-            ),
-            child: Row(
-              children: [
-                SizedBox(width: 8),
-                Expanded(
-                  child: ListWheelScrollView(
-                    itemExtent: 50,
-                    onSelectedItemChanged: (index) {
-                      setState(() {
-                        _selectedDay = index + 1;
-                      });
-                    },
-                    children: List.generate(31, (index) {
-                      return Center(
-                        child: Text(
-                          '${index + 1}',
-                          style: TextStyle(
-                            color: Colors.white.withOpacity(0.7),
-                            fontSize: 14,
-                          ),
-                        ),
-                      );
-                    }),
-                    physics: FixedExtentScrollPhysics(),
-                  ),
-                ),
-                Expanded(
-                  child: ListWheelScrollView(
-                    itemExtent: 50,
-                    onSelectedItemChanged: (index) {
-                      setState(() {
-                        _selectedMonth = months[index];
-                      });
-                    },
-                    children: List.generate(months.length, (index) {
-                      return Center(
-                        child: Text(
-                          months[index],
-                          style: TextStyle(
-                            color: Colors.white.withOpacity(0.7),
-                            fontSize: 14,
-                          ),
-                        ),
-                      );
-                    }),
-                    physics: FixedExtentScrollPhysics(),
-                  ),
-                ),
-                Expanded(
-                  child: ListWheelScrollView(
-                    itemExtent: 50,
-                    onSelectedItemChanged: (index) {
-                      setState(() {
-                        _selectedYear = 2024 - index;
-                      });
-                    },
-                    children: List.generate(100, (index) {
-                      return Center(
-                        child: Text(
-                          '${2024 - index}',
-                          style: TextStyle(
-                            color: Colors.white.withOpacity(0.7),
-                            fontSize: 14,
-                          ),
-                        ),
-                      );
-                    }),
-                    physics: FixedExtentScrollPhysics(),
-                  ),
-                ),
-                SizedBox(width: 8),
-                Icon(
-                  Icons.calendar_today,
-                  color: Colors.white.withOpacity(0.7),
-                ),
-                SizedBox(width: 8),
-              ],
-            ),
-          ),
+          
           SizedBox(height: 16),
           Container(
             decoration: BoxDecoration(

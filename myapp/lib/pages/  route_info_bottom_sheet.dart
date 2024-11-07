@@ -108,7 +108,7 @@ Widget build(BuildContext context) {
             ElevatedButton(
               onPressed: () {
                 widget.routeService.cancelRoute();
-                Navigator.pop(context);
+                
                 widget.onClose(); // Call the close callback when closing
               },
               child: Text('Close'),

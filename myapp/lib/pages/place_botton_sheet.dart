@@ -17,7 +17,7 @@ Future<void> displayBottomSheet_place(BuildContext context) async {
     isScrollControlled: true, // Allows the bottom sheet to take more space
     builder: (context) {
       return FractionallySizedBox(
-        heightFactor: 0.8, // Set the height as 80% of the screen height
+        heightFactor: 0.9, // Set the height as 80% of the screen height
         child: AddPlaceBottomSheet(
           onPlaceAdded: (String placeName, String description, String address,
               LatLng location, File? image, String category) async {
