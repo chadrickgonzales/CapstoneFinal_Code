@@ -404,7 +404,7 @@ class _AddPlaceBottomSheetState extends State<AddPlaceBottomSheet> {
               ),
             ],
           ),
-          SizedBox(height: 60.0),
+          SizedBox(height: 30.0),
 
           // Bottom section with Cancel and Submit buttons
           Row(
