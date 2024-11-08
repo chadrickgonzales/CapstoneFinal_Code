@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'sign_in.dart'; // Import the sign_in.dart file
 
 class RegisterWithEmailForm extends StatefulWidget {
   const RegisterWithEmailForm({Key? key}) : super(key: key);
@@ -48,8 +49,7 @@ class _RegisterWithEmailFormState extends State<RegisterWithEmailForm> {
           'createdAt': FieldValue.serverTimestamp(),
           'isVerified': false,
           'isAdmin': false,
-          'isDeactivate':
-              false // You can add a field to indicate verification status
+          'isDeactivate': false
         });
 
         // Send email verification
@@ -87,11 +87,19 @@ class _RegisterWithEmailFormState extends State<RegisterWithEmailForm> {
               child: Text('OK'),
               onPressed: () {
                 Navigator.of(context).pop();
+                _navigateToSignIn(); // Call the function to navigate
               },
             ),
           ],
         );
       },
+    );
+  }
+
+  void _navigateToSignIn() {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => SignInWithEmail()),
     );
   }
 

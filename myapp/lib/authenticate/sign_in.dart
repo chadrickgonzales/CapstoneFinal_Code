@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:myapp/authenticate/sign_up.dart';
 import 'package:myapp/pages/google_map_page.dart';
 import 'package:myapp/services/auth.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class SignInWithEmail extends StatefulWidget {
   const SignInWithEmail({Key? key}) : super(key: key);
@@ -17,55 +18,66 @@ class _SignInWithEmailState extends State<SignInWithEmail> {
   final AuthService _auth = AuthService();
   String error = '';
 
-  @override
-  void initState() {
-    super.initState();
-    _checkUserSignedIn();
+  Future<void> _signIn() async {
+  String email = _emailController.text.trim();
+  String password = _passwordController.text.trim();
+
+  // Step 1: Fetch user document from Firestore
+  final userDoc = await FirebaseFirestore.instance
+      .collection('users')
+      .where('email', isEqualTo: email)
+      .limit(1)
+      .get();
+
+  if (userDoc.docs.isEmpty) {
+    setState(() {
+      error = 'User not found.';
+    });
+    return;
   }
 
-  // Check if the user is signed in and if their email is verified
-  void _checkUserSignedIn() async {
-    var user = _auth.getCurrentUser();
-    if (user != null) {
-      // If user is signed in, check if email is verified
-      if (user.emailVerified) {
-        // If verified, check if user is deactivated
-        final userDoc = await FirebaseFirestore.instance
-            .collection('users')
-            .doc(user.uid)
-            .get();
+  // Get user data from Firestore
+  final userData = userDoc.docs.first.data();
+  bool isDeactivated = userData['isDeactivated'] ?? false;
+  String deactivationMessage = userData['deactivateMessage'] ?? 'Your account has been deactivated.';
 
-        if (userDoc.exists) {
-          bool isDeactivated = userDoc.data()?['isDeactivated'] ?? false;
-
-          if (isDeactivated) {
-            // User is deactivated, show the deactivation message
-            String deactivateMessage = userDoc.data()?['deactivateMessage'] ?? 'Your account has been deactivated.';
-            setState(() {
-              error = deactivateMessage;
-            });
-          } else {
-            // User is not deactivated, navigate to MapSample
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (context) => const MapSample()),
-            );
-          }
-        } else {
-          setState(() {
-            error = 'User not found.';
-          });
-        }
-      } else {
-        // Email is not verified, prompt user to verify
-        setState(() {
-          error = 'Please verify your email before signing in.';
-        });
-        await user.sendEmailVerification(); // Resend verification email
-      }
-    }
+  // Step 2: Check if account is deactivated
+  if (isDeactivated) {
+    setState(() {
+      error = deactivationMessage; // Use the deactivation message from Firestore
+    });
+    return;
   }
 
+  // Step 3: Sign in with email and password
+  User? user = await _auth.signInWithEmailPassword(email, password);
+  if (user == null) {
+    setState(() {
+      error = 'Incorrect email or password. or email is not verified';
+    });
+    return;
+  }
+
+  // Step 4: Check if the email is verified
+  if (!user.emailVerified) {
+    setState(() {
+      error = 'Incorrect email or password. or email is not verified';
+    });
+    await _auth.signOut(); // Sign out if email is not verified
+    return;
+  }
+
+  // Step 5: Update isVerified in Firestore
+  await FirebaseFirestore.instance.collection('users').doc(user.uid).update({
+    'isVerified': true,
+  });
+
+  // Step 6: Redirect to MapSample if all checks are satisfied
+  Navigator.pushReplacement(
+    context,
+    MaterialPageRoute(builder: (context) => const MapSample()),
+  );
+}
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -110,53 +122,7 @@ class _SignInWithEmailState extends State<SignInWithEmail> {
             ),
             const SizedBox(height: 20.0),
             ElevatedButton(
-              onPressed: () async {
-                String email = _emailController.text.trim();
-                String password = _passwordController.text.trim();
-
-                var result = await _auth.signInWithEmailPassword(email, password);
-
-                if (result == null) {
-                  setState(() {
-                    error = 'Failed to sign in. Check your email and password.';
-                  });
-                } else {
-                  if (!result.emailVerified) {
-                    // If email is not verified, prompt user
-                    setState(() {
-                      error = 'Please verify your email before signing in.';
-                    });
-                    await result.sendEmailVerification();  // Resend verification email
-                  } else {
-                    // Check if the account is deactivated in Firestore
-                    final userDoc = await FirebaseFirestore.instance
-                        .collection('users')
-                        .doc(result.uid)
-                        .get();
-
-                    if (userDoc.exists) {
-                      bool isDeactivated = userDoc.data()?['isDeactivated'] ?? false;
-
-                      if (isDeactivated) {
-                        String deactivateMessage = userDoc.data()?['deactivateMessage'] ?? 'Your account has been deactivated.';
-                        setState(() {
-                          error = deactivateMessage;
-                        });
-                      } else {
-                        // Navigate to MapSample if the user is not deactivated
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(builder: (context) => const MapSample()),
-                        );
-                      }
-                    } else {
-                      setState(() {
-                        error = 'User not found.';
-                      });
-                    }
-                  }
-                }
-              },
+              onPressed: _signIn,
               child: const Text('Sign In'),
             ),
             const SizedBox(height: 12.0),
@@ -169,7 +135,8 @@ class _SignInWithEmailState extends State<SignInWithEmail> {
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const RegisterWithEmailForm()),
+                  MaterialPageRoute(
+                      builder: (context) => const RegisterWithEmailForm()),
                 );
               },
               child: const Text(
