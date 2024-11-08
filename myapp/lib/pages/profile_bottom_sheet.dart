@@ -139,71 +139,58 @@ Future<void> displayBottomSheet_profile(
                             !showEditListContent &&
                             !showSettingsContent) ...[
                           Row(
-                            mainAxisAlignment: MainAxisAlignment.start,
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              Container(
-                                width: 80,
-                                height: 80,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: Colors.white,
-                                ),
-                                child: Center(
-                                  child: Icon(
-                                    Icons.person,
-                                    size: 40,
-                                    color: Color.fromARGB(225, 41, 42, 60),
-                                  ),
-                                ),
-                              ),
-                              SizedBox(width: 16.0),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    username, // Display fetched username here
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 20,
-                                    ),
-                                  ),
-                                  SizedBox(height: 4.0),
-                                  Row(
-                                    children: [
-                                      Text(
-                                        '0 followers | 5 following',
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 14,
-                                        ),
-                                      ),
-                                      SizedBox(
-                                          width:
-                                              16.0), // Add some space between
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
+  mainAxisAlignment: MainAxisAlignment.start,
+  crossAxisAlignment: CrossAxisAlignment.center, // Center items vertically
+  children: [
+    Container(
+      width: 80,
+      height: 80,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: Colors.white,
+      ),
+      child: Center(
+        child: Icon(
+          Icons.person,
+          size: 40,
+          color: Color.fromARGB(225, 41, 42, 60),
+        ),
+      ),
+    ),
+    SizedBox(width: 16.0),
+    Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisAlignment: MainAxisAlignment.center, // Center text vertically in the row
+      children: [
+        Text(
+          username, // Display fetched username here
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 20,
+          ),
+        ),
+        SizedBox(height: 4.0),
+      ],
+    ),
+  ],
+),
                           SizedBox(height: 16.0),
                           Center(
                             child: ElevatedButton(
-                              onPressed: () {},
+                              onPressed: () => _openEditProfileDialog(context),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor:
                                     Color.fromARGB(225, 41, 42, 60),
                                 side: BorderSide(
-                                    color: Color.fromARGB(
-                                        255, 136, 147, 206)), // Outline color
+                                  color: Color.fromARGB(255, 136, 147, 206),
+                                ),
                                 padding: EdgeInsets.symmetric(
-                                  horizontal: 24.0,
-                                  vertical: 12.0,
-                                ), // Adjust padding for smaller size
+                                    horizontal: 24.0, vertical: 12.0),
                               ),
-                              child: Text('Edit Profile',
-                                  style: TextStyle(color: Colors.white)),
+                              child: Text(
+                                'Edit Profile',
+                                style: TextStyle(color: Colors.white),
+                              ),
                             ),
                           ),
                           SizedBox(height: 16.0),
@@ -400,8 +387,12 @@ Widget _buildUploadsContent(BuildContext context) {
                 child: ListView.builder(
                   itemCount: snapshot.data!.docs.length,
                   itemBuilder: (BuildContext context, int index) {
-                    var post = snapshot.data!.docs[index].data()
-                        as Map<String, dynamic>;
+                    var postData = snapshot.data!.docs[index].data();
+                    // Safely cast post data
+                    if (postData == null) {
+                      return Center(child: Text('Post data is null'));
+                    }
+                    var post = postData as Map<String, dynamic>;
                     var postId = snapshot.data!.docs[index].id;
                     var username = post['username'] ?? 'Unknown';
                     var imageUrl = post['imageUrl'] ?? '';
@@ -1087,109 +1078,121 @@ Widget _buildLibraryContent(
                 ],
               ),
               StreamBuilder<QuerySnapshot>(
-  stream: FirebaseFirestore.instance
-      .collection('list')
-      .where('userId', isEqualTo: FirebaseAuth.instance.currentUser!.uid) // Filter by user ID
-      .snapshots(),
-  builder: (context, snapshot) {
-    if (snapshot.connectionState == ConnectionState.waiting) {
-      return Center(child: CircularProgressIndicator());
-    }
+                stream: FirebaseFirestore.instance
+                    .collection('list')
+                    .where('userId',
+                        isEqualTo: FirebaseAuth
+                            .instance.currentUser!.uid) // Filter by user ID
+                    .snapshots(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return Center(child: CircularProgressIndicator());
+                  }
 
-    if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-      return Center(child: Text('No lists found'));
-    }
+                  if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                    return Center(child: Text('No lists found'));
+                  }
 
-    final documents = snapshot.data!.docs;
+                  final documents = snapshot.data!.docs;
 
-    return Column(
-      children: documents.map((doc) {
-        final data = doc.data() as Map<String, dynamic>;
-        final String listId = doc.id; // Get the list ID
-        final bool isPremade = data['premade'] ?? false; // Check if 'premade' is true
+                  return Column(
+                    children: documents.map((doc) {
+                      final data = doc.data() as Map<String, dynamic>;
+                      final String listId = doc.id; // Get the list ID
+                      final bool isPremade = data['premade'] ??
+                          false; // Check if 'premade' is true
 
-        return GestureDetector(
-          onTap: () {
-            setState(() {
-              isListContentClicked = true;
-              clickedListContent = data['name'] ?? 'Unknown';
-              selectedListId = listId; // Store the selected list ID
-            });
-          },
-          child: Container(
-            color: Colors.transparent,
-            padding: const EdgeInsets.all(16.0),
-            margin: const EdgeInsets.symmetric(vertical: 8.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Icon(Icons.copy, color: Colors.white),
-                Text(
-                  data['name'] != null && data['name'].length > 30
-                      ? '${data['name'].substring(0, 30)}...' // Limit to 30 characters and add ellipsis
-                      : data['name'] ?? 'Unnamed List',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                  ),
-                  maxLines: 1, // Ensure the text stays on one line
-                  overflow: TextOverflow.ellipsis, // Add ellipsis if the text exceeds available space
-                ),
-                PopupMenuButton<String>(
-                  icon: Icon(Icons.more_vert, color: Colors.white),
-                  itemBuilder: (BuildContext context) {
-                    // Only show the delete option if 'premade' is false
-                    return [
-                      if (!isPremade)
-                        PopupMenuItem<String>(
-                          value: 'delete',
-                          child: Text('Delete List'),
-                        ),
-                    ];
-                  },
-                  onSelected: (String value) {
-                    if (value == 'delete') {
-                      showDialog(
-                        context: context,
-                        builder: (context) => AlertDialog(
-                          title: Text('Confirm Deletion'),
-                          content: Text(
-                              'Are you sure you want to delete this list?'),
-                          actions: [
-                            TextButton(
-                              onPressed: () {
-                                FirebaseFirestore.instance
-                                    .collection('list') // Adjust to your collection name
-                                    .doc(doc.id) // Use the doc ID to delete the specific document
-                                    .delete()
-                                    .then((_) {
-                                  Navigator.of(context).pop(); // Close dialog
-                                }).catchError((error) {
-                                  print('Failed to delete list: $error');
-                                });
-                              },
-                              child: Text('Yes'),
-                            ),
-                            TextButton(
-                              onPressed: () {
-                                Navigator.of(context).pop(); // Close dialog
-                              },
-                              child: Text('No'),
-                            ),
-                          ],
+                      return GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            isListContentClicked = true;
+                            clickedListContent = data['name'] ?? 'Unknown';
+                            selectedListId =
+                                listId; // Store the selected list ID
+                          });
+                        },
+                        child: Container(
+                          color: Colors.transparent,
+                          padding: const EdgeInsets.all(16.0),
+                          margin: const EdgeInsets.symmetric(vertical: 8.0),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Icon(Icons.copy, color: Colors.white),
+                              Text(
+                                data['name'] != null && data['name'].length > 30
+                                    ? '${data['name'].substring(0, 30)}...' // Limit to 30 characters and add ellipsis
+                                    : data['name'] ?? 'Unnamed List',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                ),
+                                maxLines:
+                                    1, // Ensure the text stays on one line
+                                overflow: TextOverflow
+                                    .ellipsis, // Add ellipsis if the text exceeds available space
+                              ),
+                              PopupMenuButton<String>(
+                                icon:
+                                    Icon(Icons.more_vert, color: Colors.white),
+                                itemBuilder: (BuildContext context) {
+                                  // Only show the delete option if 'premade' is false
+                                  return [
+                                    if (!isPremade)
+                                      PopupMenuItem<String>(
+                                        value: 'delete',
+                                        child: Text('Delete List'),
+                                      ),
+                                  ];
+                                },
+                                onSelected: (String value) {
+                                  if (value == 'delete') {
+                                    showDialog(
+                                      context: context,
+                                      builder: (context) => AlertDialog(
+                                        title: Text('Confirm Deletion'),
+                                        content: Text(
+                                            'Are you sure you want to delete this list?'),
+                                        actions: [
+                                          TextButton(
+                                            onPressed: () {
+                                              FirebaseFirestore.instance
+                                                  .collection(
+                                                      'list') // Adjust to your collection name
+                                                  .doc(doc
+                                                      .id) // Use the doc ID to delete the specific document
+                                                  .delete()
+                                                  .then((_) {
+                                                Navigator.of(context)
+                                                    .pop(); // Close dialog
+                                              }).catchError((error) {
+                                                print(
+                                                    'Failed to delete list: $error');
+                                              });
+                                            },
+                                            child: Text('Yes'),
+                                          ),
+                                          TextButton(
+                                            onPressed: () {
+                                              Navigator.of(context)
+                                                  .pop(); // Close dialog
+                                            },
+                                            child: Text('No'),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                  }
+                                },
+                              ),
+                            ],
+                          ),
                         ),
                       );
-                    }
-                  },
-                ),
-              ],
-            ),
-          ),
-        );
-      }).toList(),
-    );
-  },
-)
+                    }).toList(),
+                  );
+                },
+              )
             ] else if (selectedListSubButton == 'By others') ...[
               Row(
                 children: [
@@ -1203,7 +1206,8 @@ Widget _buildLibraryContent(
               StreamBuilder<QuerySnapshot>(
                 stream: FirebaseFirestore.instance
                     .collection('listbyothers')
-                    .where('UserId', isEqualTo: FirebaseAuth.instance.currentUser?.uid)
+                    .where('UserId',
+                        isEqualTo: FirebaseAuth.instance.currentUser?.uid)
                     .snapshots(),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
@@ -1521,59 +1525,117 @@ Widget _buildLibraryContent(
 
                                 // Create the bottom sheet state variable
                                 OverlayEntry? _bottomSheetOverlayEntry;
-ItineraryInfoBottomSheetState? bottomSheetState;
+                                ItineraryInfoBottomSheetState? bottomSheetState;
+                                String estimatedTime = 'Calculating...';
+                                String distance = 'Calculating...';
+                                String locationName = '';
 
-// Function to show the overlay
-void _showOverlay(BuildContext context) {
-  _bottomSheetOverlayEntry = OverlayEntry(
-    builder: (context) {
-      return Positioned(
-          top: 30,
-          left: 0,
-           child: SizedBox(
-            width: 300, // Set the desired width
-            height: 280,
-        child: Material(
-          color: Colors.transparent,
-          child: ItineraryInfoBottomSheet(
-            estimatedTime: 'Calculating...',
-            distance: 'Calculating...',
-            destination: '',
-            routeService: routeService,
-            onStateCreated: (state) {
-              bottomSheetState = state; // Store the state for future updates
-            },
-            onClose: () {
-             
-            },
-          ),
-        ),
-           ),
-      );
-    },
-  );
+                                Offset overlayPosition = Offset(30, 30);
+                                bool isMinimized = false;
 
-  Overlay.of(context).insert(_bottomSheetOverlayEntry!);
-}
+                                void _showOverlay(BuildContext context) {
+                                  _bottomSheetOverlayEntry = OverlayEntry(
+                                    builder: (context) {
+                                      return Positioned(
+                                        left: overlayPosition.dx,
+                                        top: overlayPosition.dy,
+                                        child: Draggable(
+                                          feedback:
+                                              Container(), // No feedback when dragging
+                                          onDragUpdate: (details) {
+                                            // Increment overlay position based on drag delta
+                                            overlayPosition += details.delta;
+                                            _bottomSheetOverlayEntry!
+                                                .markNeedsBuild();
+                                          },
+                                          child: SizedBox(
+                                            width: isMinimized ? 70 : 300,
+                                            height: isMinimized ? 70 : 400,
+                                            child: Material(
+                                              color: Colors.transparent,
+                                              child: Column(
+                                                children: [
+                                                  Row(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment.end,
+                                                    children: [
+                                                      Container(
+                                                        decoration:
+                                                            BoxDecoration(
+                                                          color: Colors.black
+                                                              .withOpacity(0.7),
+                                                          shape:
+                                                              BoxShape.circle,
+                                                        ),
+                                                        child: IconButton(
+                                                          icon: Icon(
+                                                            isMinimized
+                                                                ? Icons.explore
+                                                                : Icons
+                                                                    .minimize,
+                                                            color: Colors.white,
+                                                          ),
+                                                          onPressed: () {
+                                                            isMinimized =
+                                                                !isMinimized;
+                                                            _bottomSheetOverlayEntry!
+                                                                .markNeedsBuild();
+                                                          },
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                  if (!isMinimized)
+                                                    ItineraryInfoBottomSheet(
+                                                      estimatedTime:
+                                                          estimatedTime,
+                                                      distance: distance,
+                                                      destination: locationName,
+                                                      routeService:
+                                                          routeService,
+                                                      onStateCreated: (state) {
+                                                        bottomSheetState =
+                                                            state;
+                                                      },
+                                                      onClose: () {
+                                                        routeService
+                                                            .cancelRoute();
+                                                        _bottomSheetOverlayEntry
+                                                            ?.remove();
+                                                      },
+                                                    ),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  );
 
-// Function to hide the overlay
+                                  Overlay.of(context)
+                                      .insert(_bottomSheetOverlayEntry!);
+                                }
 
+                                _showOverlay(context);
 
-// Usage
-_showOverlay(context); // Call this function to show the overlay
-
-                                // Start routing through the retrieved locations with a callback
                                 await routeService.routeThroughLocations(
-                                    locations,
-                                    (estimatedTime, distance, locationName) {
-                                  // Once the route is started, update the itinerary info bottom sheet
-                                  if (bottomSheetState != null) {
-                                    bottomSheetState!.updateRouteInfo(
-                                        estimatedTime, distance, locationName);
-                                  }
-                                });
+                                  locations,
+                                  (calculatedTime, calculatedDistance,
+                                      calculatedLocationName) {
+                                    estimatedTime = calculatedTime;
+                                    distance = calculatedDistance;
+                                    locationName = calculatedLocationName;
 
-                                // Show the bottom sheet after starting the route
+                                    if (bottomSheetState != null) {
+                                      bottomSheetState!.updateRouteInfo(
+                                        estimatedTime,
+                                        distance,
+                                        locationName,
+                                      );
+                                    }
+                                  },
+                                );
                               } else {
                                 print('No locations to route.');
                               }
@@ -1649,589 +1711,641 @@ _showOverlay(context); // Call this function to show the overlay
                       }, // end of builder (for userId FutureBuilder)
                     ),
                     SizedBox(height: 8.0),
-                  StreamBuilder<QuerySnapshot>(
-  stream: FirebaseFirestore.instance
-      .collection('list')
-      .doc(selectedListId)
-      .collection('places')
-      .snapshots(),
-  builder: (context, snapshot) {
-    if (snapshot.connectionState == ConnectionState.waiting) {
-      return Center(child: CircularProgressIndicator());
-    }
+                    StreamBuilder<QuerySnapshot>(
+                      stream: FirebaseFirestore.instance
+                          .collection('list')
+                          .doc(selectedListId)
+                          .collection('places')
+                          .snapshots(),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return Center(child: CircularProgressIndicator());
+                        }
 
-    final List<QueryDocumentSnapshot> documents = snapshot.data?.docs ?? [];
-    
-    // Fetch the `premade` field from the parent 'list' document to determine visibility
-    return FutureBuilder<DocumentSnapshot>(
-      future: FirebaseFirestore.instance
-          .collection('list')
-          .doc(selectedListId)
-          .get(),
-      builder: (context, listSnapshot) {
-        if (listSnapshot.connectionState == ConnectionState.waiting) {
-          return Center(child: CircularProgressIndicator());
-        }
+                        final List<QueryDocumentSnapshot> documents =
+                            snapshot.data?.docs ?? [];
 
-        if (!listSnapshot.hasData || !listSnapshot.data!.exists) {
-          return Center(child: Text('No list found'));
-        }
+                        // Fetch the `premade` field from the parent 'list' document to determine visibility
+                        return FutureBuilder<DocumentSnapshot>(
+                          future: FirebaseFirestore.instance
+                              .collection('list')
+                              .doc(selectedListId)
+                              .get(),
+                          builder: (context, listSnapshot) {
+                            if (listSnapshot.connectionState ==
+                                ConnectionState.waiting) {
+                              return Center(child: CircularProgressIndicator());
+                            }
 
-        final data = listSnapshot.data!.data() as Map<String, dynamic>;
-        final bool isPremade = data['premade'] ?? false; // Get the premade field
+                            if (!listSnapshot.hasData ||
+                                !listSnapshot.data!.exists) {
+                              return Center(child: Text('No list found'));
+                            }
 
-        return Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Row(
-              children: [
-                // Conditionally hide the delete icon if 'premade' is true
-                if (!isPremade)
-                  IconButton(
-                    icon: Icon(Icons.delete, color: Colors.white),
-                    onPressed: () {
-                      // Show confirmation dialog
-                      showDialog(
-                        context: context,
-                        builder: (BuildContext context) {
-                          return AlertDialog(
-                            title: Text('Delete List'),
-                            content: Text(
-                                'Are you sure you want to delete this list?'),
-                            actions: [
-                              TextButton(
-                                onPressed: () {
-                                  Navigator.of(context).pop(); // Close dialog
-                                },
-                                child: Text('No'),
-                              ),
-                              TextButton(
-                                onPressed: () async {
-                                  // Delete the list from Firestore
-                                  await FirebaseFirestore.instance
-                                      .collection('list')
-                                      .doc(selectedListId)
-                                      .delete();
+                            final data = listSnapshot.data!.data()
+                                as Map<String, dynamic>;
+                            final bool isPremade = data['premade'] ??
+                                false; // Get the premade field
 
-                                  Navigator.of(context).pop(); // Close dialog
-                                  Navigator.of(context).pop();
-                                },
-                                child: Text('Yes'),
-                              ),
-                            ],
-                          );
-                        },
-                      );
-                    },
-                  ),
-                SizedBox(width: 4.0),
-                // Conditionally hide the share icon if 'premade' is true
-                if (!isPremade)
-                  IconButton(
-                    icon: Icon(Icons.share, color: Colors.white),
-                    onPressed: () {
-                      TextEditingController searchController =
-                                        TextEditingController();
-                                    List<DocumentSnapshot> userList = [];
-                                    List<DocumentSnapshot> filteredUserList =
-                                        []; // New list to hold filtered results
-                                    String?
-                                        selectedUserId; // Allow null for initial state
+                            return Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Row(
+                                  children: [
+                                    // Conditionally hide the delete icon if 'premade' is true
+                                    if (!isPremade)
+                                      IconButton(
+                                        icon: Icon(Icons.delete,
+                                            color: Colors.white),
+                                        onPressed: () {
+                                          // Show confirmation dialog
+                                          showDialog(
+                                            context: context,
+                                            builder: (BuildContext context) {
+                                              return AlertDialog(
+                                                title: Text('Delete List'),
+                                                content: Text(
+                                                    'Are you sure you want to delete this list?'),
+                                                actions: [
+                                                  TextButton(
+                                                    onPressed: () {
+                                                      Navigator.of(context)
+                                                          .pop(); // Close dialog
+                                                    },
+                                                    child: Text('No'),
+                                                  ),
+                                                  TextButton(
+                                                    onPressed: () async {
+                                                      // Delete the list from Firestore
+                                                      await FirebaseFirestore
+                                                          .instance
+                                                          .collection('list')
+                                                          .doc(selectedListId)
+                                                          .delete();
 
-                                    // Firestore user search function
+                                                      Navigator.of(context)
+                                                          .pop(); // Close dialog
+                                                      Navigator.of(context)
+                                                          .pop();
+                                                    },
+                                                    child: Text('Yes'),
+                                                  ),
+                                                ],
+                                              );
+                                            },
+                                          );
+                                        },
+                                      ),
+                                    SizedBox(width: 4.0),
+                                    // Conditionally hide the share icon if 'premade' is true
+                                    if (!isPremade)
+                                      IconButton(
+                                        icon: Icon(Icons.share,
+                                            color: Colors.white),
+                                        onPressed: () {
+                                          TextEditingController
+                                              searchController =
+                                              TextEditingController();
+                                          List<DocumentSnapshot> userList = [];
+                                          List<DocumentSnapshot>
+                                              filteredUserList =
+                                              []; // New list to hold filtered results
+                                          String?
+                                              selectedUserId; // Allow null for initial state
 
-                                    // Function to fetch initial users when the dialog opens
-                                    Future<void> fetchInitialUsers(
-                                        StateSetter setState) async {
-                                      try {
-                                        QuerySnapshot snapshot =
-                                            await FirebaseFirestore.instance
-                                                .collection('users')
-                                                .get();
-                                        setState(() {
-                                          userList =
-                                              snapshot.docs; // Store all users
-                                          filteredUserList = List.from(
-                                              userList); // Show all users initially
-                                        });
-                                        print(
-                                            "Fetched ${snapshot.docs.length} initial users.");
-                                      } catch (e) {
-                                        print(
-                                            "Error fetching initial users: $e");
-                                      }
-                                    }
+                                          // Firestore user search function
+
+                                          // Function to fetch initial users when the dialog opens
+                                          Future<void> fetchInitialUsers(
+                                              StateSetter setState) async {
+                                            try {
+                                              QuerySnapshot snapshot =
+                                                  await FirebaseFirestore
+                                                      .instance
+                                                      .collection('users')
+                                                      .get();
+                                              setState(() {
+                                                userList = snapshot
+                                                    .docs; // Store all users
+                                                filteredUserList = List.from(
+                                                    userList); // Show all users initially
+                                              });
+                                              print(
+                                                  "Fetched ${snapshot.docs.length} initial users.");
+                                            } catch (e) {
+                                              print(
+                                                  "Error fetching initial users: $e");
+                                            }
+                                          }
 
 // Search function to filter users based on the search query
-                                    void searchUsers(
-                                        String query, StateSetter setState) {
-                                      setState(() {
-                                        if (query.isNotEmpty) {
-                                          filteredUserList =
-                                              userList.where((userDoc) {
-                                            String username = (userDoc.data()
-                                                    as Map<String,
-                                                        dynamic>)['username'] ??
-                                                '';
-                                            return username
-                                                .toLowerCase()
-                                                .contains(query
-                                                    .toLowerCase()); // Case insensitive search
-                                          }).toList();
-                                        } else {
-                                          filteredUserList = List.from(
-                                              userList); // Reset to original if no query
-                                        }
-                                      });
-                                    }
-
-                                    showDialog(
-                                      context: context,
-                                      builder: (BuildContext context) {
-                                        bool showShareButton = false;
-                                        List<bool> isChecked =
-                                            List.generate(13, (index) => false);
-                                        bool showMessage = false;
-
-                                        return StatefulBuilder(
-                                          builder: (BuildContext context,
+                                          void searchUsers(String query,
                                               StateSetter setState) {
-                                            fetchInitialUsers(
-                                                setState); // Fetch initial users once when the dialog opens
-                                            return Dialog(
-                                              backgroundColor:
-                                                  Colors.transparent,
-                                              child: Container(
-                                                width: 500.0,
-                                                height: 700.0,
-                                                decoration: BoxDecoration(
-                                                  color: Color.fromARGB(
-                                                      255, 44, 46, 86),
-                                                  borderRadius:
-                                                      BorderRadius.circular(
-                                                          8.0),
-                                                ),
-                                                child: Column(
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment
-                                                          .spaceBetween,
-                                                  children: [
-                                                    Padding(
-                                                      padding:
-                                                          const EdgeInsets.all(
-                                                              16.0),
-                                                      child: TextField(
-                                                        controller:
-                                                            searchController,
-                                                        decoration:
-                                                            InputDecoration(
-                                                          filled: true,
-                                                          fillColor: Colors
-                                                              .transparent,
-                                                          hintText: 'Search...',
-                                                          hintStyle: TextStyle(
-                                                              color: Colors
-                                                                  .white54),
-                                                          border:
-                                                              OutlineInputBorder(
-                                                            borderRadius:
-                                                                BorderRadius
-                                                                    .circular(
-                                                                        32.0),
-                                                            borderSide:
-                                                                BorderSide(
-                                                                    color: Colors
-                                                                        .white),
-                                                          ),
-                                                          enabledBorder:
-                                                              OutlineInputBorder(
-                                                            borderRadius:
-                                                                BorderRadius
-                                                                    .circular(
-                                                                        32.0),
-                                                            borderSide:
-                                                                BorderSide(
-                                                                    color: Colors
-                                                                        .white),
-                                                          ),
-                                                          focusedBorder:
-                                                              OutlineInputBorder(
-                                                            borderRadius:
-                                                                BorderRadius
-                                                                    .circular(
-                                                                        32.0),
-                                                            borderSide:
-                                                                BorderSide(
-                                                                    color: Colors
-                                                                        .white),
-                                                          ),
-                                                        ),
-                                                        onChanged: (query) {
-                                                          searchUsers(query,
-                                                              setState); // Pass the setState to update the user list
-                                                        },
+                                            setState(() {
+                                              if (query.isNotEmpty) {
+                                                filteredUserList =
+                                                    userList.where((userDoc) {
+                                                  String username =
+                                                      (userDoc.data() as Map<
+                                                                  String,
+                                                                  dynamic>)[
+                                                              'username'] ??
+                                                          '';
+                                                  return username
+                                                      .toLowerCase()
+                                                      .contains(query
+                                                          .toLowerCase()); // Case insensitive search
+                                                }).toList();
+                                              } else {
+                                                filteredUserList = List.from(
+                                                    userList); // Reset to original if no query
+                                              }
+                                            });
+                                          }
+
+                                          showDialog(
+                                            context: context,
+                                            builder: (BuildContext context) {
+                                              bool showShareButton = false;
+                                              List<bool> isChecked =
+                                                  List.generate(
+                                                      13, (index) => false);
+                                              bool showMessage = false;
+
+                                              return StatefulBuilder(
+                                                builder: (BuildContext context,
+                                                    StateSetter setState) {
+                                                  fetchInitialUsers(
+                                                      setState); // Fetch initial users once when the dialog opens
+                                                  return Dialog(
+                                                    backgroundColor:
+                                                        Colors.transparent,
+                                                    child: Container(
+                                                      width: 500.0,
+                                                      height: 700.0,
+                                                      decoration: BoxDecoration(
+                                                        color: Color.fromARGB(
+                                                            255, 44, 46, 86),
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(8.0),
                                                       ),
-                                                    ),
-                                                    Expanded(
-                                                      child: GridView.builder(
-                                                        padding:
-                                                            const EdgeInsets
-                                                                .all(8.0),
-                                                        gridDelegate:
-                                                            SliverGridDelegateWithFixedCrossAxisCount(
-                                                          crossAxisCount: 3,
-                                                          mainAxisSpacing: 8.0,
-                                                          crossAxisSpacing: 8.0,
-                                                        ),
-                                                        itemCount: filteredUserList
-                                                            .length, // Show only filtered results
-                                                        itemBuilder:
-                                                            (context, index) {
-                                                          var user =
-                                                              filteredUserList[
-                                                                          index]
-                                                                      .data()
-                                                                  as Map<String,
-                                                                      dynamic>?;
-
-                                                          if (user == null ||
-                                                              !user.containsKey(
-                                                                  'username')) {
-                                                            return SizedBox(); // Handle missing username
-                                                          }
-
-                                                          String username =
-                                                              user['username'];
-
-                                                          return GestureDetector(
-                                                            onTap: () {
-                                                              setState(() {
-                                                                isChecked[
-                                                                        index] =
-                                                                    !isChecked[
-                                                                        index];
-                                                                showShareButton =
-                                                                    isChecked
-                                                                        .contains(
-                                                                            true);
-                                                                selectedUserId =
-                                                                    filteredUserList[
-                                                                            index]
-                                                                        .id; // Capture the userId
-                                                              });
-                                                            },
-                                                            child: Stack(
-                                                              children: [
-                                                                Center(
-                                                                  child: Column(
-                                                                    mainAxisSize:
-                                                                        MainAxisSize
-                                                                            .min,
-                                                                    children: [
-                                                                      CircleAvatar(
-                                                                        radius:
-                                                                            35,
-                                                                        backgroundColor:
-                                                                            Colors.white,
-                                                                        child:
-                                                                            Icon(
-                                                                          Icons
-                                                                              .person,
-                                                                          size:
-                                                                              35,
-                                                                          color: Color.fromARGB(
-                                                                              255,
-                                                                              44,
-                                                                              46,
-                                                                              86),
-                                                                        ),
-                                                                      ),
-                                                                      SizedBox(
-                                                                          height:
-                                                                              8.0),
-                                                                      Text(
-                                                                        username.length >
-                                                                                10
-                                                                            ? '${username.substring(0, 10)}...'
-                                                                            : username,
-                                                                        style: TextStyle(
-                                                                            color:
-                                                                                Colors.white),
-                                                                        overflow:
-                                                                            TextOverflow.ellipsis, // Handle overflow
-                                                                      ),
-                                                                    ],
-                                                                  ),
+                                                      child: Column(
+                                                        mainAxisAlignment:
+                                                            MainAxisAlignment
+                                                                .spaceBetween,
+                                                        children: [
+                                                          Padding(
+                                                            padding:
+                                                                const EdgeInsets
+                                                                    .all(16.0),
+                                                            child: TextField(
+                                                              controller:
+                                                                  searchController,
+                                                              decoration:
+                                                                  InputDecoration(
+                                                                filled: true,
+                                                                fillColor: Colors
+                                                                    .transparent,
+                                                                hintText:
+                                                                    'Search...',
+                                                                hintStyle: TextStyle(
+                                                                    color: Colors
+                                                                        .white54),
+                                                                border:
+                                                                    OutlineInputBorder(
+                                                                  borderRadius:
+                                                                      BorderRadius
+                                                                          .circular(
+                                                                              32.0),
+                                                                  borderSide:
+                                                                      BorderSide(
+                                                                          color:
+                                                                              Colors.white),
                                                                 ),
-                                                                if (isChecked[
-                                                                    index])
-                                                                  Positioned(
-                                                                    bottom:
-                                                                        10, // Adjust as needed
-                                                                    right:
-                                                                        10, // Adjust as needed
-                                                                    child: Icon(
-                                                                      Icons
-                                                                          .check_circle,
-                                                                      color: Colors
-                                                                          .green,
-                                                                      size: 20,
-                                                                    ),
-                                                                  ),
-                                                              ],
+                                                                enabledBorder:
+                                                                    OutlineInputBorder(
+                                                                  borderRadius:
+                                                                      BorderRadius
+                                                                          .circular(
+                                                                              32.0),
+                                                                  borderSide:
+                                                                      BorderSide(
+                                                                          color:
+                                                                              Colors.white),
+                                                                ),
+                                                                focusedBorder:
+                                                                    OutlineInputBorder(
+                                                                  borderRadius:
+                                                                      BorderRadius
+                                                                          .circular(
+                                                                              32.0),
+                                                                  borderSide:
+                                                                      BorderSide(
+                                                                          color:
+                                                                              Colors.white),
+                                                                ),
+                                                              ),
+                                                              onChanged:
+                                                                  (query) {
+                                                                searchUsers(
+                                                                    query,
+                                                                    setState); // Pass the setState to update the user list
+                                                              },
                                                             ),
-                                                          );
-                                                        },
-                                                      ),
-                                                    ),
-                                                    if (showShareButton)
-                                                      Padding(
-                                                        padding:
-                                                            const EdgeInsets
-                                                                .all(16.0),
-                                                        child: SizedBox(
-                                                          width:
-                                                              double.infinity,
-                                                          child: ElevatedButton(
-                                                            style:
-                                                                ElevatedButton
-                                                                    .styleFrom(
-                                                              backgroundColor:
-                                                                  Color
-                                                                      .fromARGB(
-                                                                          255,
-                                                                          132,
-                                                                          143,
-                                                                          200),
-                                                            ),
-                                                            onPressed:
-                                                                () async {
-                                                              String?
-                                                                  currentUserId =
-                                                                  FirebaseAuth
-                                                                      .instance
-                                                                      .currentUser
-                                                                      ?.uid; // Get the current user's ID
-                                                              String?
-                                                                  currentListId =
-                                                                  selectedListId; // Replace with the actual listId
+                                                          ),
+                                                          Expanded(
+                                                            child: GridView
+                                                                .builder(
+                                                              padding:
+                                                                  const EdgeInsets
+                                                                      .all(8.0),
+                                                              gridDelegate:
+                                                                  SliverGridDelegateWithFixedCrossAxisCount(
+                                                                crossAxisCount:
+                                                                    3,
+                                                                mainAxisSpacing:
+                                                                    8.0,
+                                                                crossAxisSpacing:
+                                                                    8.0,
+                                                              ),
+                                                              itemCount:
+                                                                  filteredUserList
+                                                                      .length, // Show only filtered results
+                                                              itemBuilder:
+                                                                  (context,
+                                                                      index) {
+                                                                var user = filteredUserList[
+                                                                            index]
+                                                                        .data()
+                                                                    as Map<
+                                                                        String,
+                                                                        dynamic>?;
 
-                                                              if (selectedUserId !=
-                                                                      null &&
-                                                                  currentUserId !=
-                                                                      null) {
-                                                                try {
-                                                                  // Upload to Firestore
-                                                                  await FirebaseFirestore
-                                                                      .instance
-                                                                      .collection(
-                                                                          'listbyothers')
-                                                                      .add({
-                                                                    'listId':
-                                                                        currentListId,
-                                                                    'UserIdFrom':
-                                                                        currentUserId,
-                                                                    'UserId':
-                                                                        selectedUserId, // Ensure selectedUserId is valid
-                                                                  });
+                                                                if (user ==
+                                                                        null ||
+                                                                    !user.containsKey(
+                                                                        'username')) {
+                                                                  return SizedBox(); // Handle missing username
+                                                                }
 
-                                                                  setState(() {
-                                                                    showShareButton =
-                                                                        false;
-                                                                    showMessage =
-                                                                        true;
-                                                                    isChecked = List.generate(
-                                                                        13,
-                                                                        (index) =>
-                                                                            false); // Reset checkmarks
-                                                                  });
+                                                                String
+                                                                    username =
+                                                                    user[
+                                                                        'username'];
 
-                                                                  Future.delayed(
-                                                                      Duration(
-                                                                          seconds:
-                                                                              3),
-                                                                      () {
+                                                                return GestureDetector(
+                                                                  onTap: () {
                                                                     setState(
                                                                         () {
-                                                                      showMessage =
-                                                                          false;
+                                                                      isChecked[
+                                                                              index] =
+                                                                          !isChecked[
+                                                                              index];
+                                                                      showShareButton =
+                                                                          isChecked
+                                                                              .contains(true);
+                                                                      selectedUserId =
+                                                                          filteredUserList[index]
+                                                                              .id; // Capture the userId
                                                                     });
-                                                                  });
-                                                                } catch (e) {
-                                                                  print(
-                                                                      "Error uploading to Firestore: $e");
-                                                                }
-                                                              } else {
-                                                                // Handle the case where userId is null
-                                                                print(
-                                                                    "Selected userId or current userId is null.");
-                                                              }
-                                                            },
-                                                            child: Text('Send',
-                                                                style: TextStyle(
-                                                                    color: Colors
-                                                                        .white)),
+                                                                  },
+                                                                  child: Stack(
+                                                                    children: [
+                                                                      Center(
+                                                                        child:
+                                                                            Column(
+                                                                          mainAxisSize:
+                                                                              MainAxisSize.min,
+                                                                          children: [
+                                                                            CircleAvatar(
+                                                                              radius: 35,
+                                                                              backgroundColor: Colors.white,
+                                                                              child: Icon(
+                                                                                Icons.person,
+                                                                                size: 35,
+                                                                                color: Color.fromARGB(255, 44, 46, 86),
+                                                                              ),
+                                                                            ),
+                                                                            SizedBox(height: 8.0),
+                                                                            Text(
+                                                                              username.length > 10 ? '${username.substring(0, 10)}...' : username,
+                                                                              style: TextStyle(color: Colors.white),
+                                                                              overflow: TextOverflow.ellipsis, // Handle overflow
+                                                                            ),
+                                                                          ],
+                                                                        ),
+                                                                      ),
+                                                                      if (isChecked[
+                                                                          index])
+                                                                        Positioned(
+                                                                          bottom:
+                                                                              10, // Adjust as needed
+                                                                          right:
+                                                                              10, // Adjust as needed
+                                                                          child:
+                                                                              Icon(
+                                                                            Icons.check_circle,
+                                                                            color:
+                                                                                Colors.green,
+                                                                            size:
+                                                                                20,
+                                                                          ),
+                                                                        ),
+                                                                    ],
+                                                                  ),
+                                                                );
+                                                              },
+                                                            ),
                                                           ),
-                                                        ),
+                                                          if (showShareButton)
+                                                            Padding(
+                                                              padding:
+                                                                  const EdgeInsets
+                                                                      .all(
+                                                                      16.0),
+                                                              child: SizedBox(
+                                                                width: double
+                                                                    .infinity,
+                                                                child:
+                                                                    ElevatedButton(
+                                                                  style: ElevatedButton
+                                                                      .styleFrom(
+                                                                    backgroundColor:
+                                                                        Color.fromARGB(
+                                                                            255,
+                                                                            132,
+                                                                            143,
+                                                                            200),
+                                                                  ),
+                                                                  onPressed:
+                                                                      () async {
+                                                                    String?
+                                                                        currentUserId =
+                                                                        FirebaseAuth
+                                                                            .instance
+                                                                            .currentUser
+                                                                            ?.uid; // Get the current user's ID
+                                                                    String?
+                                                                        currentListId =
+                                                                        selectedListId; // Replace with the actual listId
+
+                                                                    if (selectedUserId !=
+                                                                            null &&
+                                                                        currentUserId !=
+                                                                            null) {
+                                                                      try {
+                                                                        // Upload to Firestore
+                                                                        await FirebaseFirestore
+                                                                            .instance
+                                                                            .collection('listbyothers')
+                                                                            .add({
+                                                                          'listId':
+                                                                              currentListId,
+                                                                          'UserIdFrom':
+                                                                              currentUserId,
+                                                                          'UserId':
+                                                                              selectedUserId, // Ensure selectedUserId is valid
+                                                                        });
+
+                                                                        setState(
+                                                                            () {
+                                                                          showShareButton =
+                                                                              false;
+                                                                          showMessage =
+                                                                              true;
+                                                                          isChecked = List.generate(
+                                                                              13,
+                                                                              (index) => false); // Reset checkmarks
+                                                                        });
+
+                                                                        Future.delayed(
+                                                                            Duration(seconds: 3),
+                                                                            () {
+                                                                          setState(
+                                                                              () {
+                                                                            showMessage =
+                                                                                false;
+                                                                          });
+                                                                        });
+                                                                      } catch (e) {
+                                                                        print(
+                                                                            "Error uploading to Firestore: $e");
+                                                                      }
+                                                                    } else {
+                                                                      // Handle the case where userId is null
+                                                                      print(
+                                                                          "Selected userId or current userId is null.");
+                                                                    }
+                                                                  },
+                                                                  child: Text(
+                                                                      'Send',
+                                                                      style: TextStyle(
+                                                                          color:
+                                                                              Colors.white)),
+                                                                ),
+                                                              ),
+                                                            ),
+                                                          if (showMessage)
+                                                            Container(
+                                                              padding:
+                                                                  const EdgeInsets
+                                                                      .symmetric(
+                                                                      vertical:
+                                                                          8.0,
+                                                                      horizontal:
+                                                                          16.0),
+                                                              decoration:
+                                                                  BoxDecoration(
+                                                                color: Color
+                                                                    .fromARGB(
+                                                                        255,
+                                                                        132,
+                                                                        143,
+                                                                        200),
+                                                                borderRadius:
+                                                                    BorderRadius
+                                                                        .circular(
+                                                                            8.0),
+                                                              ),
+                                                              width: double
+                                                                  .infinity,
+                                                              child: Text(
+                                                                'List sent to Username.',
+                                                                style:
+                                                                    TextStyle(
+                                                                  color: Colors
+                                                                      .black,
+                                                                  fontSize:
+                                                                      16.0,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .bold,
+                                                                ),
+                                                                textAlign:
+                                                                    TextAlign
+                                                                        .left,
+                                                              ),
+                                                            ),
+                                                        ],
                                                       ),
-                                                    if (showMessage)
-                                                      Container(
-                                                        padding:
-                                                            const EdgeInsets
-                                                                .symmetric(
-                                                                vertical: 8.0,
-                                                                horizontal:
-                                                                    16.0),
-                                                        decoration:
-                                                            BoxDecoration(
-                                                          color: Color.fromARGB(
-                                                              255,
-                                                              132,
-                                                              143,
-                                                              200),
-                                                          borderRadius:
-                                                              BorderRadius
-                                                                  .circular(
-                                                                      8.0),
-                                                        ),
-                                                        width: double.infinity,
-                                                        child: Text(
-                                                          'List sent to Username.',
-                                                          style: TextStyle(
-                                                            color: Colors.black,
-                                                            fontSize: 16.0,
-                                                            fontWeight:
-                                                                FontWeight.bold,
-                                                          ),
-                                                          textAlign:
-                                                              TextAlign.left,
-                                                        ),
-                                                      ),
-                                                  ],
-                                                ),
-                                              ),
-                                            );
+                                                    ),
+                                                  );
+                                                },
+                                              );
+                                            },
+                                          );
+                                        },
+                                      ),
+                                    // Conditionally hide the bookmark icon if 'premade' is true
+                                    if (!isPremade)
+                                      IconButton(
+                                        icon: FutureBuilder<DocumentSnapshot>(
+                                          future: FirebaseFirestore.instance
+                                              .collection('listbyothers')
+                                              .doc(selectedListId)
+                                              .get(),
+                                          builder: (context, snapshot) {
+                                            if (snapshot.connectionState ==
+                                                ConnectionState.waiting) {
+                                              return Icon(
+                                                  Icons.bookmark_outline,
+                                                  color: Colors
+                                                      .white); // Show unsaved icon while loading
+                                            }
+                                            if (snapshot.hasData &&
+                                                snapshot.data!.exists) {
+                                              return Icon(Icons.bookmark,
+                                                  color: Colors
+                                                      .white); // Show saved icon if bookmarked
+                                            }
+                                            return Icon(Icons.bookmark_outline,
+                                                color: Colors
+                                                    .white); // Show unsaved icon if not bookmarked
                                           },
+                                        ),
+                                        onPressed: () async {
+                                          final bookmarkDocRef =
+                                              FirebaseFirestore.instance
+                                                  .collection('listbyothers')
+                                                  .doc(selectedListId);
+
+                                          final bookmarkSnapshot =
+                                              await bookmarkDocRef.get();
+
+                                          if (bookmarkSnapshot.exists) {
+                                            // If already bookmarked, remove the bookmark
+                                            await bookmarkDocRef.delete();
+                                          } else {
+                                            // If not bookmarked, add it to listbyothers
+                                            await bookmarkDocRef.set({
+                                              'listId': selectedListId,
+                                              'userId': FirebaseAuth
+                                                  .instance
+                                                  .currentUser!
+                                                  .uid, // Store current user's ID
+                                            });
+                                          }
+                                          setState(
+                                              () {}); // Trigger a rebuild to update the icon
+                                        },
+                                      ),
+                                    SizedBox(width: 4.0),
+                                    // Conditionally hide the lock/unlock icon if 'premade' is true
+                                    if (!isPremade)
+                                      IconButton(
+                                        icon: Icon(
+                                          isPrivate
+                                              ? Icons.lock
+                                              : Icons.lock_open,
+                                          color: Colors.white,
+                                        ),
+                                        onPressed: () async {
+                                          try {
+                                            final firestore =
+                                                FirebaseFirestore.instance;
+                                            final listDoc = firestore
+                                                .collection('list')
+                                                .doc(selectedListId);
+
+                                            // Toggle the 'isPrivate' field
+                                            await listDoc.update(
+                                                {'isPrivate': !isPrivate});
+
+                                            setState(() {
+                                              isPrivate = !isPrivate;
+                                            });
+                                          } catch (e) {
+                                            print(
+                                                'Error updating privacy status: $e');
+                                          }
+                                        },
+                                      ),
+                                  ],
+                                ),
+                                // Conditionally render the circle and plus button if there are places in the list
+                                if (documents.isNotEmpty)
+                                  InkWell(
+                                    onTap: () {
+                                      try {
+                                        if (selectedListId != null &&
+                                            selectedListId!.isNotEmpty) {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) =>
+                                                  _buildAddToListContent(
+                                                      toggleAddToListContent,
+                                                      selectedListId!,
+                                                      context),
+                                            ),
+                                          );
+                                        } else {
+                                          ScaffoldMessenger.of(context)
+                                              .showSnackBar(
+                                            SnackBar(
+                                                content:
+                                                    Text('No list selected')),
+                                          );
+                                        }
+                                      } catch (e) {
+                                        print('Error occurred: $e');
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(
+                                          SnackBar(
+                                              content:
+                                                  Text('An error occurred')),
                                         );
-                                      },
-                                    );
-                    },
-                  ),
-                // Conditionally hide the bookmark icon if 'premade' is true
-                if (!isPremade)
-                  IconButton(
-                    icon: FutureBuilder<DocumentSnapshot>(
-                      future: FirebaseFirestore.instance
-                          .collection('listbyothers')
-                          .doc(selectedListId)
-                          .get(),
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState == ConnectionState.waiting) {
-                          return Icon(Icons.bookmark_outline, color: Colors.white); // Show unsaved icon while loading
-                        }
-                        if (snapshot.hasData && snapshot.data!.exists) {
-                          return Icon(Icons.bookmark, color: Colors.white); // Show saved icon if bookmarked
-                        }
-                        return Icon(Icons.bookmark_outline, color: Colors.white); // Show unsaved icon if not bookmarked
+                                      }
+                                    },
+                                    child: Visibility(
+                                      visible:
+                                          !isPremade, // Hide the container and icon if 'premade' is true
+                                      child: Container(
+                                        width: 28.0,
+                                        height: 28.0,
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          border: Border.all(
+                                              color: Colors.white, width: 1.5),
+                                        ),
+                                        child: Center(
+                                          child: Icon(
+                                            Icons.add,
+                                            color: Colors.white,
+                                            size: 16.0,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            );
+                          },
+                        );
                       },
                     ),
-                    onPressed: () async {
-                      final bookmarkDocRef = FirebaseFirestore.instance
-                          .collection('listbyothers')
-                          .doc(selectedListId);
-
-                      final bookmarkSnapshot = await bookmarkDocRef.get();
-
-                      if (bookmarkSnapshot.exists) {
-                        // If already bookmarked, remove the bookmark
-                        await bookmarkDocRef.delete();
-                      } else {
-                        // If not bookmarked, add it to listbyothers
-                        await bookmarkDocRef.set({
-                          'listId': selectedListId,
-                          'userId': FirebaseAuth.instance.currentUser!.uid, // Store current user's ID
-                        });
-                      }
-                      setState(() {}); // Trigger a rebuild to update the icon
-                    },
-                  ),
-                SizedBox(width: 4.0),
-                // Conditionally hide the lock/unlock icon if 'premade' is true
-                if (!isPremade)
-                  IconButton(
-                    icon: Icon(
-                      isPrivate ? Icons.lock : Icons.lock_open,
-                      color: Colors.white,
-                    ),
-                    onPressed: () async {
-                      try {
-                        final firestore = FirebaseFirestore.instance;
-                        final listDoc = firestore.collection('list').doc(selectedListId);
-
-                        // Toggle the 'isPrivate' field
-                        await listDoc.update({'isPrivate': !isPrivate});
-
-                        setState(() {
-                          isPrivate = !isPrivate;
-                        });
-                      } catch (e) {
-                        print('Error updating privacy status: $e');
-                      }
-                    },
-                  ),
-              ],
-            ),
-            // Conditionally render the circle and plus button if there are places in the list
-            if (documents.isNotEmpty)
-              InkWell(
-                onTap: () {
-                  try {
-                    if (selectedListId != null && selectedListId!.isNotEmpty) {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) =>
-                              _buildAddToListContent(toggleAddToListContent, selectedListId!, context),
-                        ),
-                      );
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('No list selected')),
-                      );
-                    }
-                  } catch (e) {
-                    print('Error occurred: $e');
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('An error occurred')),
-                    );
-                  }
-                },
- child: Visibility(
-                        visible: !isPremade, // Hide the container and icon if 'premade' is true
-                        child: Container(
-                          width: 28.0,
-                          height: 28.0,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: Border.all(color: Colors.white, width: 1.5),
-                          ),
-                          child: Center(
-                            child: Icon(
-                              Icons.add,
-                              color: Colors.white,
-                              size: 16.0,
-                    ),
-                  ),
-                ),
-              ),
-              ),
-          ],
-        );
-      },
-    );
-  },
-),
-
                     Divider(color: Colors.white),
                     SizedBox(height: 24.0),
                     StreamBuilder<QuerySnapshot>(
@@ -2312,157 +2426,190 @@ _showOverlay(context); // Call this function to show the overlay
                             ],
                           );
                         } else {
-                         return SingleChildScrollView(
-  scrollDirection: Axis.horizontal,
-  child: Row(
-    children: documents.map((doc) {
-      return Padding(
-        padding: EdgeInsets.symmetric(horizontal: 8.0),
-        child: GestureDetector(
-          child: Container(
-            height: 320,
-            width: 320.0,
-            padding: EdgeInsets.all(16.0),
-            decoration: BoxDecoration(
-              color: Color.fromARGB(255, 90, 111, 132),
-              borderRadius: BorderRadius.circular(12.0),
-            ),
-            child: Stack(
-              children: [
-                Positioned(
-                  top: 16.0,
-                  left: 16.0,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        doc['name'] ?? 'Place Name',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 18.0,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      SizedBox(height: 8.0),
-                      Text(
-                        'Address',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 14.0,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Positioned(
-                  top: 80.0,
-                  left: 0.0,
-                  right: 0.0,
-                  child: Container(
-                    width: 200.0,
-                    height: 200.0,
-                    decoration: BoxDecoration(
-                      color: Colors.black,
-                      borderRadius: BorderRadius.circular(12.0),
-                    ),
-                    child: doc['imageUrl'] != null && doc['imageUrl'] != ''
-                        ? ClipRRect(
-                            borderRadius: BorderRadius.circular(12.0),
-                            child: Image.network(
-                              doc['imageUrl'],
-                              fit: BoxFit.cover,
-                            ),
-                          )
-                        : Center(
-                            child: Text(
-                              'Placeholder Image',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 16.0,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                  ),
-                ),
-                // Fetch the 'premade' field from the parent list document
-                FutureBuilder<DocumentSnapshot>(
-                  future: FirebaseFirestore.instance
-                      .collection('list')
-                      .doc(selectedListId)
-                      .get(),
-                  builder: (context, listSnapshot) {
-                    if (listSnapshot.connectionState == ConnectionState.waiting) {
-                      return Center(child: CircularProgressIndicator());
-                    }
+                          return SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: Row(
+                              children: documents.map((doc) {
+                                return Padding(
+                                  padding:
+                                      EdgeInsets.symmetric(horizontal: 8.0),
+                                  child: GestureDetector(
+                                    child: Container(
+                                      height: 320,
+                                      width: 320.0,
+                                      padding: EdgeInsets.all(16.0),
+                                      decoration: BoxDecoration(
+                                        color:
+                                            Color.fromARGB(255, 90, 111, 132),
+                                        borderRadius:
+                                            BorderRadius.circular(12.0),
+                                      ),
+                                      child: Stack(
+                                        children: [
+                                          Positioned(
+                                            top: 16.0,
+                                            left: 16.0,
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  doc['name'] ?? 'Place Name',
+                                                  style: TextStyle(
+                                                    color: Colors.white,
+                                                    fontSize: 18.0,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                                SizedBox(height: 8.0),
+                                                Text(
+                                                  'Address',
+                                                  style: TextStyle(
+                                                    color: Colors.white,
+                                                    fontSize: 14.0,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          Positioned(
+                                            top: 80.0,
+                                            left: 0.0,
+                                            right: 0.0,
+                                            child: Container(
+                                              width: 200.0,
+                                              height: 200.0,
+                                              decoration: BoxDecoration(
+                                                color: Colors.black,
+                                                borderRadius:
+                                                    BorderRadius.circular(12.0),
+                                              ),
+                                              child: doc['imageUrl'] != null &&
+                                                      doc['imageUrl'] != ''
+                                                  ? ClipRRect(
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              12.0),
+                                                      child: Image.network(
+                                                        doc['imageUrl'],
+                                                        fit: BoxFit.cover,
+                                                      ),
+                                                    )
+                                                  : Center(
+                                                      child: Text(
+                                                        'Placeholder Image',
+                                                        style: TextStyle(
+                                                          color: Colors.white,
+                                                          fontSize: 16.0,
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                        ),
+                                                      ),
+                                                    ),
+                                            ),
+                                          ),
+                                          // Fetch the 'premade' field from the parent list document
+                                          FutureBuilder<DocumentSnapshot>(
+                                            future: FirebaseFirestore.instance
+                                                .collection('list')
+                                                .doc(selectedListId)
+                                                .get(),
+                                            builder: (context, listSnapshot) {
+                                              if (listSnapshot
+                                                      .connectionState ==
+                                                  ConnectionState.waiting) {
+                                                return Center(
+                                                    child:
+                                                        CircularProgressIndicator());
+                                              }
 
-                    if (!listSnapshot.hasData || !listSnapshot.data!.exists) {
-                      return Container(); // Or handle no data case
-                    }
+                                              if (!listSnapshot.hasData ||
+                                                  !listSnapshot.data!.exists) {
+                                                return Container(); // Or handle no data case
+                                              }
 
-                    final data = listSnapshot.data!.data() as Map<String, dynamic>;
-                    final bool isPremade = data['premade'] ?? false; // Get the 'premade' field
+                                              final data =
+                                                  listSnapshot.data!.data()
+                                                      as Map<String, dynamic>;
+                                              final bool isPremade = data[
+                                                      'premade'] ??
+                                                  false; // Get the 'premade' field
 
-                    return Positioned(
-                      top: 8.0,
-                      right: 8.0,
-                      child: Visibility(
-                        visible: !isPremade, // Hide the delete icon if 'premade' is true
-                        child: IconButton(
-                          icon: Icon(
-                            Icons.delete,
-                            color: Colors.white,
-                          ),
-                          onPressed: () {
-                            // Show confirmation dialog before deletion
-                            showDialog(
-                              context: context,
-                              builder: (context) => AlertDialog(
-                                title: Text('Confirm Deletion'),
-                                content: Text(
-                                    'Are you sure you want to delete this place?'),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () {
-                                      // Perform deletion
-                                      FirebaseFirestore.instance
-                                          .collection('list')
-                                          .doc(selectedListId)
-                                          .collection('places')
-                                          .doc(doc.id)
-                                          .delete()
-                                          .then((_) {
-                                        Navigator.of(context).pop(); // Close dialog
-                                      }).catchError((error) {
-                                        // Handle error if needed
-                                        print('Failed to delete place: $error');
-                                      });
-                                    },
-                                    child: Text('Delete'),
+                                              return Positioned(
+                                                top: 8.0,
+                                                right: 8.0,
+                                                child: Visibility(
+                                                  visible:
+                                                      !isPremade, // Hide the delete icon if 'premade' is true
+                                                  child: IconButton(
+                                                    icon: Icon(
+                                                      Icons.delete,
+                                                      color: Colors.white,
+                                                    ),
+                                                    onPressed: () {
+                                                      // Show confirmation dialog before deletion
+                                                      showDialog(
+                                                        context: context,
+                                                        builder: (context) =>
+                                                            AlertDialog(
+                                                          title: Text(
+                                                              'Confirm Deletion'),
+                                                          content: Text(
+                                                              'Are you sure you want to delete this place?'),
+                                                          actions: [
+                                                            TextButton(
+                                                              onPressed: () {
+                                                                // Perform deletion
+                                                                FirebaseFirestore
+                                                                    .instance
+                                                                    .collection(
+                                                                        'list')
+                                                                    .doc(
+                                                                        selectedListId)
+                                                                    .collection(
+                                                                        'places')
+                                                                    .doc(doc.id)
+                                                                    .delete()
+                                                                    .then((_) {
+                                                                  Navigator.of(
+                                                                          context)
+                                                                      .pop(); // Close dialog
+                                                                }).catchError(
+                                                                        (error) {
+                                                                  // Handle error if needed
+                                                                  print(
+                                                                      'Failed to delete place: $error');
+                                                                });
+                                                              },
+                                                              child: Text(
+                                                                  'Delete'),
+                                                            ),
+                                                            TextButton(
+                                                              onPressed: () {
+                                                                Navigator.of(
+                                                                        context)
+                                                                    .pop(); // Close dialog
+                                                              },
+                                                              child: Text(
+                                                                  'Cancel'),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      );
+                                                    },
+                                                  ),
+                                                ),
+                                              );
+                                            },
+                                          ),
+                                        ],
+                                      ),
+                                    ),
                                   ),
-                                  TextButton(
-                                    onPressed: () {
-                                      Navigator.of(context).pop(); // Close dialog
-                                    },
-                                    child: Text('Cancel'),
-                                  ),
-                                ],
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
-    }).toList(),
-  ),
-);
+                                );
+                              }).toList(),
+                            ),
+                          );
                         }
                       },
                     ),
@@ -2684,59 +2831,117 @@ _showOverlay(context); // Call this function to show the overlay
 
                                 // Create the bottom sheet state variable
                                 OverlayEntry? _bottomSheetOverlayEntry;
-ItineraryInfoBottomSheetState? bottomSheetState;
+                                ItineraryInfoBottomSheetState? bottomSheetState;
+                                String estimatedTime = 'Calculating...';
+                                String distance = 'Calculating...';
+                                String locationName = '';
 
-// Function to show the overlay
-void _showOverlay(BuildContext context) {
-  _bottomSheetOverlayEntry = OverlayEntry(
-    builder: (context) {
-      return Positioned(
-          top: 30,
-          left: 0,
-           child: SizedBox(
-            width: 300, // Set the desired width
-            height: 280,
-        child: Material(
-          color: Colors.transparent,
-          child: ItineraryInfoBottomSheet(
-            estimatedTime: 'Calculating...',
-            distance: 'Calculating...',
-            destination: '',
-            routeService: routeService,
-            onStateCreated: (state) {
-              bottomSheetState = state; // Store the state for future updates
-            },
-            onClose: () {
-             
-            },
-          ),
-        ),
-           ),
-      );
-    },
-  );
+                                Offset overlayPosition = Offset(30, 30);
+                                bool isMinimized = false;
 
-  Overlay.of(context).insert(_bottomSheetOverlayEntry!);
-}
+                                void _showOverlay(BuildContext context) {
+                                  _bottomSheetOverlayEntry = OverlayEntry(
+                                    builder: (context) {
+                                      return Positioned(
+                                        left: overlayPosition.dx,
+                                        top: overlayPosition.dy,
+                                        child: Draggable(
+                                          feedback:
+                                              Container(), // No feedback when dragging
+                                          onDragUpdate: (details) {
+                                            // Increment overlay position based on drag delta
+                                            overlayPosition += details.delta;
+                                            _bottomSheetOverlayEntry!
+                                                .markNeedsBuild();
+                                          },
+                                          child: SizedBox(
+                                            width: isMinimized ? 70 : 300,
+                                            height: isMinimized ? 70 : 400,
+                                            child: Material(
+                                              color: Colors.transparent,
+                                              child: Column(
+                                                children: [
+                                                  Row(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment.end,
+                                                    children: [
+                                                      Container(
+                                                        decoration:
+                                                            BoxDecoration(
+                                                          color: Colors.black
+                                                              .withOpacity(0.7),
+                                                          shape:
+                                                              BoxShape.circle,
+                                                        ),
+                                                        child: IconButton(
+                                                          icon: Icon(
+                                                            isMinimized
+                                                                ? Icons.explore
+                                                                : Icons
+                                                                    .minimize,
+                                                            color: Colors.white,
+                                                          ),
+                                                          onPressed: () {
+                                                            isMinimized =
+                                                                !isMinimized;
+                                                            _bottomSheetOverlayEntry!
+                                                                .markNeedsBuild();
+                                                          },
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                  if (!isMinimized)
+                                                    ItineraryInfoBottomSheet(
+                                                      estimatedTime:
+                                                          estimatedTime,
+                                                      distance: distance,
+                                                      destination: locationName,
+                                                      routeService:
+                                                          routeService,
+                                                      onStateCreated: (state) {
+                                                        bottomSheetState =
+                                                            state;
+                                                      },
+                                                      onClose: () {
+                                                        routeService
+                                                            .cancelRoute();
+                                                        _bottomSheetOverlayEntry
+                                                            ?.remove();
+                                                      },
+                                                    ),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  );
 
-// Function to hide the overlay
+                                  Overlay.of(context)
+                                      .insert(_bottomSheetOverlayEntry!);
+                                }
 
+                                _showOverlay(context);
 
-// Usage
-_showOverlay(context); // Call this function to show the overlay
-
-                                // Start routing through the retrieved locations with a callback
                                 await routeService.routeThroughLocations(
-                                    locations,
-                                    (estimatedTime, distance, locationName) {
-                                  // Once the route is started, update the itinerary info bottom sheet
-                                  if (bottomSheetState != null) {
-                                    bottomSheetState!.updateRouteInfo(
-                                        estimatedTime, distance, locationName);
-                                  }
-                                });
+                                  locations,
+                                  (calculatedTime, calculatedDistance,
+                                      calculatedLocationName) {
+                                    estimatedTime = calculatedTime;
+                                    distance = calculatedDistance;
+                                    locationName = calculatedLocationName;
 
-                                // Show the bottom sheet after starting the route
+                                    if (bottomSheetState != null) {
+                                      bottomSheetState!.updateRouteInfo(
+                                        estimatedTime,
+                                        distance,
+                                        locationName,
+                                      );
+                                    }
+                                  },
+                                );
                               } else {
                                 print('No locations to route.');
                               }
@@ -3833,7 +4038,6 @@ Widget _buildAlternateContent(VoidCallback toggleContent) {
               ),
             ),
           ),
-          
           SizedBox(height: 16),
           Container(
             decoration: BoxDecoration(
@@ -4975,30 +5179,9 @@ Widget _buildSettingsContent(BuildContext context, VoidCallback toggleContent) {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Row(
-              children: [
-                Icon(
-                  Icons.lock,
-                  size: 32,
-                  color: Colors.white, // Icon color
-                ),
-                SizedBox(width: 32.0), // Spacing between icon and text
-                Text(
-                  'General',
-                  style: TextStyle(
-                    fontSize: 32.0,
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
+             
             ),
-            Switch(
-              value: false, // Default switch state
-              onChanged: (value) {
-                // Handle switch change if needed
-              },
-              activeColor: Colors.white, // Switch color when active
-            ),
+           
           ],
         ),
       ),
@@ -5010,22 +5193,7 @@ Widget _buildSettingsContent(BuildContext context, VoidCallback toggleContent) {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Row(
-              children: [
-                Icon(
-                  Icons.add_circle_outline,
-                  size: 32,
-                  color: Colors.white, // Icon color
-                ),
-                SizedBox(width: 32.0), // Spacing between icon and text
-                Text(
-                  'Account',
-                  style: TextStyle(
-                    fontSize: 32.0,
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
+              
             ),
             GestureDetector(
               onTap: () {
@@ -5147,4 +5315,67 @@ Widget _buildByOthersContent() {
     ],
   );
 }
+
 //END OF CODE
+String userId = FirebaseAuth.instance.currentUser!.uid;
+void _openEditProfileDialog(BuildContext context) async {
+  TextEditingController _usernameController = TextEditingController();
+
+  // Fetch current username from Firestore
+  DocumentSnapshot userDoc =
+      await FirebaseFirestore.instance.collection('users').doc(userId).get();
+  String currentUsername =
+      userDoc['username']; // Assuming the username field is 'username'
+
+  // Set current username as placeholder
+  _usernameController.text = currentUsername;
+
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: Text('Edit Profile'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: _usernameController,
+              decoration: InputDecoration(
+                labelText: 'New Username',
+                hintText: 'Enter your new username',
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            child: Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              String newUsername = _usernameController.text.trim();
+              if (newUsername.isNotEmpty) {
+                // Update the username in Firestore
+                await FirebaseFirestore.instance
+                    .collection('users')
+                    .doc(userId)
+                    .update({
+                  'username': newUsername,
+                });
+                Navigator.pop(context);
+              } else {
+                // Show a warning if username is empty
+                ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Username cannot be empty')));
+              }
+            },
+            child: Text('Save'),
+          ),
+        ],
+      );
+    },
+  );
+}

@@ -24,63 +24,64 @@ class SavedBottomSheet extends StatefulWidget {
 
 class _SavedBottomSheetState extends State<SavedBottomSheet> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final String googleApiKey = 'AIzaSyAocNg3WkX5ppmhc-vTf1IHvG75EM1Rr5k'; // Replace with your Google API Key
+  final String googleApiKey =
+      'AIzaSyAocNg3WkX5ppmhc-vTf1IHvG75EM1Rr5k'; // Replace with your Google API Key
 
   bool _showDetails = false;
   Map<String, dynamic>? _selectedPlaceDetails;
 
   Future<List<Map<String, dynamic>>> _fetchSavedPlacesWithDetails() async {
-  final currentUser = FirebaseAuth.instance.currentUser;
-  final currentUserId = currentUser?.uid;
+    final currentUser = FirebaseAuth.instance.currentUser;
+    final currentUserId = currentUser?.uid;
 
-  if (currentUserId == null) {
-    print("User is not logged in.");
-    return [];
-  }
-
-  try {
-    final querySnapshot = await _firestore
-        .collection('save')
-        .where('userId', isEqualTo: currentUserId)
-        .get();
-
-    Set<String> uniquePlaceIds = Set();
-    List<Map<String, dynamic>> uniqueSavedPlaces = [];
-
-    for (var doc in querySnapshot.docs) {
-      String? placeId = doc['placeId'] ?? doc['place_id']; 
-      // Handle both field names
-      final placeName = doc['placeName'] ?? 'Unknown Place';
-      final docId = doc.id;
-      final imageUrl = doc['imageUrl'] ?? 'no image';  // Get imageUrl directly from the 'save' collection
-
-      if (!uniquePlaceIds.contains(placeId)) {
-        uniquePlaceIds.add(placeId!);
-
-        Map<String, dynamic>? placeDetails;
-        try {
-          placeDetails = await _fetchPlaceDetails(placeId);
-        } catch (e) {
-          print("Failed to fetch place details for $placeId: $e");
-          placeDetails = {'name': placeName};
-        }
-
-        uniqueSavedPlaces.add({
-          'docId': docId,
-          'placeDetails': placeDetails,
-          'placeName': placeName,
-          'imageUrl': imageUrl, // Include imageUrl from 'save' collection
-        });
-      }
+    if (currentUserId == null) {
+      print("User is not logged in.");
+      return [];
     }
 
-    return uniqueSavedPlaces;
-  } catch (e) {
-    print("Error fetching saved places: $e");
-    return [];
-  }
-}
+    try {
+      final querySnapshot = await _firestore
+          .collection('save')
+          .where('userId', isEqualTo: currentUserId)
+          .get();
 
+      Set<String> uniquePlaceIds = Set();
+      List<Map<String, dynamic>> uniqueSavedPlaces = [];
+
+      for (var doc in querySnapshot.docs) {
+        String? placeId = doc['placeId'] ?? doc['place_id'];
+        // Handle both field names
+        final placeName = doc['placeName'] ?? 'Unknown Place';
+        final docId = doc.id;
+        final imageUrl = doc['imageUrl'] ??
+            'no image'; // Get imageUrl directly from the 'save' collection
+
+        if (!uniquePlaceIds.contains(placeId)) {
+          uniquePlaceIds.add(placeId!);
+
+          Map<String, dynamic>? placeDetails;
+          try {
+            placeDetails = await _fetchPlaceDetails(placeId);
+          } catch (e) {
+            print("Failed to fetch place details for $placeId: $e");
+            placeDetails = {'name': placeName};
+          }
+
+          uniqueSavedPlaces.add({
+            'docId': docId,
+            'placeDetails': placeDetails,
+            'placeName': placeName,
+            'imageUrl': imageUrl, // Include imageUrl from 'save' collection
+          });
+        }
+      }
+
+      return uniqueSavedPlaces;
+    } catch (e) {
+      print("Error fetching saved places: $e");
+      return [];
+    }
+  }
 
   Future<Map<String, dynamic>> _fetchPlaceDetails(String place_id) async {
     final response = await http.get(Uri.parse(
@@ -93,15 +94,16 @@ class _SavedBottomSheetState extends State<SavedBottomSheet> {
     }
   }
 
-  void _showPlaceDetails(Map<String, dynamic> placeDetails, {String? imageUrl}) {
-  setState(() {
-    _selectedPlaceDetails = {
-      ...placeDetails,
-      'imageUrl': imageUrl, // Add imageUrl to the place details
-    };
-    _showDetails = true;
-  });
-}
+  void _showPlaceDetails(Map<String, dynamic> placeDetails,
+      {String? imageUrl}) {
+    setState(() {
+      _selectedPlaceDetails = {
+        ...placeDetails,
+        'imageUrl': imageUrl, // Add imageUrl to the place details
+      };
+      _showDetails = true;
+    });
+  }
 
   void _hidePlaceDetails() {
     setState(() {
@@ -153,13 +155,17 @@ class _SavedBottomSheetState extends State<SavedBottomSheet> {
                         itemBuilder: (context, index) {
                           final savedPlace = snapshot.data![index];
                           final placeDetails = savedPlace['placeDetails'];
-                          final placeName = placeDetails['name'] ?? 'Unknown Place';
-                          final address = placeDetails['formatted_address'] ?? 'Unknown Address';
-                          final photoReference = placeDetails['photos']?[0]['photo_reference'];
-                          final imageUrl = savedPlace['imageUrl']; // Use imageUrl from savedPlace // Handle photos
+                          final placeName =
+                              placeDetails['name'] ?? 'Unknown Place';
+                          final address = placeDetails['formatted_address'] ??
+                              'Unknown Address';
+                          final photoReference =
+                              placeDetails['photos']?[0]['photo_reference'];
+                          final imageUrl = savedPlace[
+                              'imageUrl']; // Use imageUrl from savedPlace // Handle photos
                           final docId = savedPlace['docId'];
-                           return _buildSavedPlaceContainer(
-                              placeName, address, photoReference, imageUrl, placeDetails, docId);
+                          return _buildSavedPlaceContainer(placeName, address,
+                              photoReference, imageUrl, placeDetails, docId);
                         },
                       );
                     },
@@ -170,119 +176,121 @@ class _SavedBottomSheetState extends State<SavedBottomSheet> {
     );
   }
 
-Widget _buildSavedPlaceContainer(String placeName, String address,
-    String? photoReference, String? imageUrl, Map<String, dynamic> placeDetails, String docId) {
-  return StatefulBuilder(
-    builder: (BuildContext context, StateSetter setState) {
-      return GestureDetector(
-        onTap: () {
-          _showPlaceDetails(placeDetails, imageUrl: imageUrl);
-        },
-        child: Container(
-          height: 150.0,
-          width: double.infinity,
-          margin: EdgeInsets.only(bottom: 16.0),
-          decoration: BoxDecoration(
-            color: Colors.grey[850],
-            borderRadius: BorderRadius.circular(8.0),
-          ),
-          child: Stack(
-            children: [
-              // Display the base image if available
-              if (imageUrl != null)
-                Positioned.fill(
-                  child: Image.network(
-                    imageUrl,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      return Container();
-                    },
+  Widget _buildSavedPlaceContainer(
+      String placeName,
+      String address,
+      String? photoReference,
+      String? imageUrl,
+      Map<String, dynamic> placeDetails,
+      String docId) {
+    return StatefulBuilder(
+      builder: (BuildContext context, StateSetter setState) {
+        return GestureDetector(
+          onTap: () {
+            _showPlaceDetails(placeDetails, imageUrl: imageUrl);
+          },
+          child: Container(
+            height: 150.0,
+            width: double.infinity,
+            margin: EdgeInsets.only(bottom: 16.0),
+            decoration: BoxDecoration(
+              color: Colors.grey[850],
+              borderRadius: BorderRadius.circular(8.0),
+            ),
+            child: Stack(
+              children: [
+                // Display the base image if available
+                if (imageUrl != null)
+                  Positioned.fill(
+                    child: Image.network(
+                      imageUrl,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container();
+                      },
+                    ),
+                  ),
+                // Display the photoReference image if available
+                if (photoReference != null)
+                  Positioned.fill(
+                    child: Image.network(
+                      'https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=$photoReference&key=$googleApiKey',
+                      fit: BoxFit.cover,
+                      // Adjust opacity if needed
+                      colorBlendMode: BlendMode.darken,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container();
+                      },
+                    ),
+                  ),
+                // Text and bookmark icon
+                Positioned(
+                  left: 8.0,
+                  bottom: 8.0,
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.place,
+                        color: Colors.white,
+                      ),
+                      SizedBox(width: 4.0),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            placeName,
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 16.0,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(
+                            address,
+                            style: TextStyle(
+                              color: Colors.white70,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
-              // Display the photoReference image if available
-              if (photoReference != null)
-                Positioned.fill(
-                  child: Image.network(
-                    'https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=$photoReference&key=$googleApiKey',
-                    fit: BoxFit.cover,
-                    // Adjust opacity if needed
-                    colorBlendMode: BlendMode.darken,
-                    errorBuilder: (context, error, stackTrace) {
-                      return Container();
-                    },
-                  ),
-                ),
-              // Text and bookmark icon
-              Positioned(
-                left: 8.0,
-                bottom: 8.0,
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.place,
+                Positioned(
+                  right: 8.0,
+                  bottom: 8.0,
+                  child: IconButton(
+                    icon: Icon(
+                      Icons.bookmark,
                       color: Colors.white,
                     ),
-                    SizedBox(width: 4.0),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          placeName,
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 16.0,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        Text(
-                          address,
-                          style: TextStyle(
-                            color: Colors.white70,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              Positioned(
-                right: 8.0,
-                bottom: 8.0,
-                child: IconButton(
-                  icon: Icon(
-                    Icons.bookmark,
-                    color: Colors.white,
+                     onPressed: () {
+    _toggleSavedState(docId); // Pass the document ID to remove the place
+  },
                   ),
-                  onPressed: () {
-                    setState(() {
-                      _toggleSavedState(docId, placeDetails['place_id'] ?? placeDetails['placeId']);
-                    });
-                  },
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-      );
-    },
-  );
-}
-  Future<void> _toggleSavedState(String docId, String placeId) async {
-    final docRef = _firestore.collection('save').doc(docId);
-    final docSnapshot = await docRef.get();
-    if (docSnapshot.exists) {
-      await docRef.delete();
-    } else {
-      final currentUser = FirebaseAuth.instance.currentUser;
-      if (currentUser != null) {
-        await docRef.set({
-          'userId': currentUser.uid,
-          'placeId': placeId, // Ensure to store the placeId
-          'placeName': 'Placeholder', // Provide real place name if necessary
-        });
-      }
-    }
+        );
+      },
+    );
   }
+
+  Future<void> _toggleSavedState(String docId) async {
+  final docRef = _firestore.collection('save').doc(docId);
+
+  // Check if the document exists
+  final docSnapshot = await docRef.get();
+  if (docSnapshot.exists) {
+    // Delete the document to remove the saved place
+    await docRef.delete();
+    setState(() {
+      // Trigger a rebuild to update the UI
+      _fetchSavedPlacesWithDetails(); // Refresh saved places after deletion
+    });
+  }
+}
 }
 
 class PlaceDetailView extends StatefulWidget {
@@ -290,7 +298,8 @@ class PlaceDetailView extends StatefulWidget {
   final VoidCallback onBack;
   final String? imageUrl; // Add this line
 
-  PlaceDetailView({required this.placeDetails, required this.onBack, this.imageUrl});
+  PlaceDetailView(
+      {required this.placeDetails, required this.onBack, this.imageUrl});
 
   @override
   _PlaceDetailViewState createState() => _PlaceDetailViewState();
@@ -316,7 +325,8 @@ class _PlaceDetailViewState extends State<PlaceDetailView> {
     if (currentUser != null) {
       final username = await _fetchUsername(currentUser.uid);
       final comment = _commentController.text.trim();
-      final placeId = widget.placeDetails['place_id'] ?? widget.placeDetails['placeId']; // Handle both field names
+      final placeId = widget.placeDetails['place_id'] ??
+          widget.placeDetails['placeId']; // Handle both field names
 
       if (placeId != null && username != null && comment.isNotEmpty) {
         try {
@@ -340,158 +350,176 @@ class _PlaceDetailViewState extends State<PlaceDetailView> {
     }
   }
 
-@override
-Widget build(BuildContext context) {
-  final placeName = widget.placeDetails['name'] ?? 'Unknown Place';
-  final address = widget.placeDetails['formatted_address'] ?? 'Unknown Address';
-  final photoReference = widget.placeDetails['photos']?[0]['photo_reference'];
- final imageUrl = widget.placeDetails['imageUrl'];
+  @override
+  Widget build(BuildContext context) {
+    final placeName = widget.placeDetails['name'] ?? 'Unknown Place';
+    final address =
+        widget.placeDetails['formatted_address'] ?? 'Unknown Address';
+    final photoReference = widget.placeDetails['photos']?[0]['photo_reference'];
+    final imageUrl = widget.placeDetails['imageUrl'];
 
-  return Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              placeName,
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 24.0,
-                fontWeight: FontWeight.bold,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                placeName.length > 20
+                    ? placeName.substring(0, 20) + '...'
+                    : placeName,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 24.0,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-            ),
-            IconButton(
-              icon: Icon(Icons.close, color: Colors.white),
-              onPressed: widget.onBack,
-            ),
-          ],
-        ),
-      ),
-      if (photoReference != null)
-       Positioned.fill(
-                  child: Image.network(
-                   'https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=$photoReference&key=AIzaSyAocNg3WkX5ppmhc-vTf1IHvG75EM1Rr5k',
-                    fit: BoxFit.cover,
-                       height: 200,
-                       width: 600,
-                    errorBuilder: (context, error, stackTrace) {
-                      return Container();
-                    },
-                  ),
-                )
-        
-      else if (imageUrl != null) // Fallback to imageUrl if photoReference is not available
-       Positioned.fill(
-                  child: Image.network(
-                    imageUrl,
-                    fit: BoxFit.cover,
-                       height: 200,
-                       width: 600,
-                    errorBuilder: (context, error, stackTrace) {
-                      return Container();
-                    },
-                  ),
-                ),
-      Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0),
-        child: Text(
-          address,
-          style: TextStyle(color: Colors.white70),
-        ),
-      ),
-      Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: RatingBar.builder(
-          initialRating: _selectedRating,
-          minRating: 1,
-          itemCount: 5,
-          itemBuilder: (context, index) => Icon(
-            Icons.star,
-            color: Colors.amber,
+              IconButton(
+                icon: Icon(Icons.close, color: Colors.white),
+                onPressed: widget.onBack,
+              ),
+            ],
           ),
-          onRatingUpdate: (rating) {
-            setState(() {
-              _selectedRating = rating;
-            });
-          },
         ),
-      ),
-      Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0),
-        child: TextField(
-          controller: _commentController,
-          decoration: InputDecoration(
-            hintText: 'Write your review...',
-            hintStyle: TextStyle(color: Colors.white70),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8.0),
+        if (photoReference != null)
+          Positioned.fill(
+            child: Image.network(
+              'https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=$photoReference&key=AIzaSyAocNg3WkX5ppmhc-vTf1IHvG75EM1Rr5k',
+              fit: BoxFit.cover,
+              height: 200,
+              width: 600,
+              errorBuilder: (context, error, stackTrace) {
+                return Container();
+              },
+            ),
+          )
+        else if (imageUrl !=
+            null) // Fallback to imageUrl if photoReference is not available
+          Positioned.fill(
+            child: Image.network(
+              imageUrl,
+              fit: BoxFit.cover,
+              height: 200,
+              width: 600,
+              errorBuilder: (context, error, stackTrace) {
+                return Container();
+              },
             ),
           ),
-          style: TextStyle(color: Colors.white),
-          maxLines: 4,
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          child: Text(
+            address,
+            style: TextStyle(color: Colors.white70),
+          ),
         ),
-      ),
-      Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: ElevatedButton(
-          onPressed: _submitReview,
-          child: Text('Submit Review'),
+        Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: RatingBar.builder(
+            initialRating: _selectedRating,
+            minRating: 1,
+            itemCount: 5,
+            itemBuilder: (context, index) => Icon(
+              Icons.star,
+              color: Colors.amber,
+            ),
+            onRatingUpdate: (rating) {
+              setState(() {
+                _selectedRating = rating;
+              });
+            },
+          ),
         ),
-      ),
-      Expanded(
-        child: StreamBuilder<QuerySnapshot>(
-          stream: _firestore
-              .collection('ratings')
-              //.where('place_id', isEqualTo: widget.placeDetails['place_id'])
-              
-               .where('placeId', isEqualTo: widget.placeDetails['placeId'])
-                .where('place_id', isEqualTo: widget.placeDetails['place_id'])
-                // google map api
-              .snapshots(),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return Center(child: CircularProgressIndicator());
-            }
+        Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: ElevatedButton(
+            onPressed: () =>
+                _showReviewDialog(context), // Show dialog on button press
+            child: Text('Write a Review'),
+          ),
+        ),
+        Expanded(
+          child: StreamBuilder<QuerySnapshot>(
+            stream: _firestore
+                .collection('ratings')
+                .where('placeId', isEqualTo: widget.placeDetails['placeId'])
+                .snapshots(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return Center(child: CircularProgressIndicator());
+              }
 
-            final reviews = snapshot.hasData ? snapshot.data!.docs : [];
-            if (reviews.isEmpty) {
-              return Center(
-                child: Text(
-                  'No reviews yet.',
-                  style: TextStyle(color: Colors.white70),
-                ),
-              );
-            }
-            return ListView.builder(
-              shrinkWrap: true,
-              itemCount: snapshot.data!.docs.length,
-              itemBuilder: (context, index) {
-                final review = snapshot.data!.docs[index].data() as Map<String, dynamic>;
-                return ListTile(
-                  contentPadding: EdgeInsets.symmetric(vertical: 8.0),
-                  leading: Icon(Icons.person, color: Colors.white),
-                  title: Text(
-                    review['username'] ?? 'Unknown User',
-                    style: TextStyle(color: Colors.white),
-                  ),
-                  subtitle: Text(
-                    review['comment'] ?? '',
+              final reviews = snapshot.hasData ? snapshot.data!.docs : [];
+              if (reviews.isEmpty) {
+                return Center(
+                  child: Text(
+                    'No reviews yet.',
                     style: TextStyle(color: Colors.white70),
                   ),
-                  trailing: Text(
-                    '${review['rating']}⭐',
-                    style: TextStyle(color: Colors.amber),
-                  ),
                 );
-              },
-            );
-          },
+              }
+              return ListView.builder(
+                shrinkWrap: true,
+                itemCount: snapshot.data!.docs.length,
+                itemBuilder: (context, index) {
+                  final review =
+                      snapshot.data!.docs[index].data() as Map<String, dynamic>;
+                  return ListTile(
+                    contentPadding: EdgeInsets.symmetric(vertical: 8.0),
+                    leading: Icon(Icons.person, color: Colors.white),
+                    title: Text(
+                      review['username'] ?? 'Unknown User',
+                      style: TextStyle(color: Colors.white),
+                    ),
+                    subtitle: Text(
+                      review['comment'] ?? '',
+                      style: TextStyle(color: Colors.white70),
+                    ),
+                    trailing: Text(
+                      '${review['rating']}⭐',
+                      style: TextStyle(color: Colors.amber),
+                    ),
+                  );
+                },
+              );
+            },
+          ),
         ),
-      ),
-    ],
-  );
-}
+      ],
+    );
+  }
+
+// Function to show the dialog for writing a review
+  void _showReviewDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Write Your Review'),
+          content: TextField(
+            controller: _commentController,
+            decoration: InputDecoration(
+              hintText: 'Write your review...',
+              hintStyle: TextStyle(color: Colors.black38),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8.0),
+              ),
+            ),
+            maxLines: 4,
+          ),
+          actions: [
+            ElevatedButton(
+              onPressed: () {
+                _submitReview(); // Submit the review
+                Navigator.of(context).pop(); // Close the dialog
+              },
+              child: Text('Submit'),
+            ),
+          ],
+        );
+      },
+    );
+  }
 }

@@ -13,6 +13,9 @@ import '../pages/  route_info_bottom_sheet.dart';
 
 
 class RouteService {
+  bool isLocationUpdatesCancelled = false;
+  StreamSubscription? progressStreamSubscription;
+  bool isRouteCancelled = false;
   bool _showButton = false; 
   bool get showButton => _showButton;
   final BuildContext context;
@@ -54,71 +57,78 @@ List<double> _remainingDistances = [];
 
 
 
-  void _startLocationUpdates() {
-    _locationSubscription = _location.onLocationChanged.listen((LocationData locationData) {
-  if (locationData.latitude != null && locationData.longitude != null) {
-    LatLng newDeviceLocation = LatLng(locationData.latitude!, locationData.longitude!);
-    _updateDeviceMarker(newDeviceLocation);
-    _updateDeviceRoute(newDeviceLocation);
-
-    if (_destinationLocation != null) {
-      calculateProgress(newDeviceLocation, _destinationLocation!);
+ void _startLocationUpdates() {
+  _locationSubscription = _location.onLocationChanged.listen((LocationData locationData) {
+    if (isLocationUpdatesCancelled) {
+      // Stop further updates if canceled
+      _locationSubscription?.cancel();
+      return;
     }
-  }
-});
-  }
 
-  void _updateDeviceMarker(LatLng newLocation) {
-    markers.removeWhere((marker) => marker.markerId.value == 'device');
-    markers.add(Marker(
-      markerId: MarkerId('device'),
-      position: newLocation,
-      infoWindow: InfoWindow(title: 'Your Location'),
-      icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
-    ));
-  }
+    if (locationData.latitude != null && locationData.longitude != null) {
+      LatLng newDeviceLocation = LatLng(locationData.latitude!, locationData.longitude!);
+      _updateDeviceMarker(newDeviceLocation);
+      _updateDeviceRoute(newDeviceLocation);
 
-  Future<void> _updateDynamicRoute(LatLng newLocation) async {
-    if (_destinationLocation != null) {
-      List<LatLng> newRoute =
-          await _getRoute(newLocation, _destinationLocation!);
-
-      if (newRoute.isNotEmpty) {
-        routePoints.clear();
-        routePoints.addAll(newRoute);
-
-        polylines
-            .removeWhere((polyline) => polyline.polylineId.value == 'route');
-        polylines.add(Polyline(
-          polylineId: PolylineId('route'),
-          points: routePoints,
-          color: Colors.blue,
-          width: 5,
-        ));
-
-        // Adjust the camera view
-        mapController.animateCamera(CameraUpdate.newLatLng(newLocation));
-        print("Route updated with ${newRoute.length} points.");
-      } else {
-        print("No new route points found.");
+      if (_destinationLocation != null) {
+        calculateProgress(newDeviceLocation, _destinationLocation!);
       }
     }
+  });
+}
+
+void _updateDeviceMarker(LatLng newLocation) {
+  if (isLocationUpdatesCancelled) {
+    // Stop updating if canceled
+    return;
   }
+  markers.removeWhere((marker) => marker.markerId.value == 'device');
+  markers.add(Marker(
+    markerId: MarkerId('device'),
+    position: newLocation,
+    infoWindow: InfoWindow(title: 'Your Location'),
+    icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
+  ));
+}
+
+Future<void> _updateDynamicRoute(LatLng newLocation) async {
+  if (isLocationUpdatesCancelled) {
+    // Stop updating if canceled
+    return;
+  }
+
+  if (_destinationLocation != null) {
+    List<LatLng> newRoute = await _getRoute(newLocation, _destinationLocation!);
+
+    if (newRoute.isNotEmpty) {
+      routePoints.clear();
+      routePoints.addAll(newRoute);
+
+      polylines.removeWhere((polyline) => polyline.polylineId.value == 'route');
+      polylines.add(Polyline(
+        polylineId: PolylineId('route'),
+        points: routePoints,
+        color: Colors.blue,
+        width: 5,
+      ));
+
+      // Adjust the camera view
+      mapController.animateCamera(CameraUpdate.newLatLng(newLocation));
+      print("Route updated with ${newRoute.length} points.");
+    } else {
+      print("No new route points found.");
+    }
+  }
+}
 
   Future<void> _updateDeviceRoute(LatLng newLocation) async {
     if (_deviceRoutePoints.isEmpty || _deviceRoutePoints.last != newLocation) {
       _deviceRoutePoints.add(newLocation);
 
-      // Update device route polyline (no longer used)
-      // polylines.removeWhere((polyline) => polyline.polylineId.value == 'deviceRoute');
-      // _devicePolyline = Polyline(
-      //   polylineId: PolylineId('deviceRoute'),
-      //   points: _deviceRoutePoints,
-      //   color: Colors.red, // Removed this line
-      //   width: 5,
-      // );
-      // polylines.add(_devicePolyline!);
-
+      if (isLocationUpdatesCancelled) {
+    // Stop updating if canceled
+    return;
+  }
       // Update the dynamic route
       await _updateDynamicRoute(newLocation);
 
@@ -202,72 +212,137 @@ List<double> _remainingDistances = [];
   }
 }
 
- PersistentBottomSheetController? _bottomSheetController;
-RouteInfoBottomSheetState? _bottomSheetState;
-OverlayEntry? _routeInfoOverlay;
+  PersistentBottomSheetController? _bottomSheetController;
+  RouteInfoBottomSheetState? _bottomSheetState;
+  OverlayEntry? _routeInfoOverlay;
 
+  void _showRouteInfoBottomSheet(
+      String estimatedTime, String distance, String toAddress) {
+    if (_routeInfoOverlay == null) {
+      // State variables for overlay position and minimized state
+      Offset overlayPosition = Offset(30, 30); // Initial position
+      bool isMinimized = false;
 
- void _showRouteInfoBottomSheet(String estimatedTime, String distance, String toAddress) {
-  if (_routeInfoOverlay == null) {
-    // Create the overlay entry
-    _routeInfoOverlay = OverlayEntry(
-      builder: (BuildContext context) {
-        return Positioned(
-          top: 30,
-          left: 0,
-            child: SizedBox(
-            width: 300, // Set the desired width
-            height: 180,
-          child: RouteInfoBottomSheet(
-            estimatedTime: estimatedTime,
-            distance: distance,
-            destination: toAddress,
-            routeService: RouteService(
-              context: context, 
-              mapController: mapController, 
-              markers: markers, 
-              polylines: polylines, 
-              routePoints: routePoints, 
-              apiKey: apiKey
+      // Create the overlay entry
+      _routeInfoOverlay = OverlayEntry(
+        builder: (BuildContext context) {
+          return Positioned(
+            left: overlayPosition.dx,
+            top: overlayPosition.dy,
+            child: GestureDetector(
+              onPanUpdate: (details) {
+                // Update overlay position in real-time during drag
+                overlayPosition += details.delta;
+                _routeInfoOverlay?.markNeedsBuild();
+              },
+              child: Material(
+                color: Colors.transparent,
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxWidth: isMinimized ? 70 : 300,
+                    maxHeight: isMinimized ? 70 : 350,
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Minimize/Expand Button Row
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          Container(
+                            decoration: BoxDecoration(
+                              color: Colors.black.withOpacity(0.7),
+                              shape: BoxShape.circle,
+                            ),
+                            child: IconButton(
+                              icon: Icon(
+                                isMinimized ? Icons.explore : Icons.minimize,
+                                color: Colors.white,
+                              ),
+                              onPressed: () {
+                                // Toggle minimize state and rebuild overlay
+                                isMinimized = !isMinimized;
+                                _routeInfoOverlay?.markNeedsBuild();
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                      if (!isMinimized)
+                        Expanded(
+                          child: SizedBox(
+                            width: 300,
+                            height: 120,
+                            child: RouteInfoBottomSheet(
+                              estimatedTime: estimatedTime,
+                              distance: distance,
+                              destination: toAddress,
+                              routeService: RouteService(
+                                context: context,
+                                mapController: mapController,
+                                markers: markers,
+                                polylines: polylines,
+                                routePoints: routePoints,
+                                apiKey: apiKey,
+                              ),
+                              onStateCreated:
+                                  (RouteInfoBottomSheetState state) {
+                                _bottomSheetState = state;
+                              },
+                              onClose: () {
+                                _removeRouteInfoOverlay();
+                                _showButton = true;
+                              },
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
             ),
-            onStateCreated: (RouteInfoBottomSheetState state) {
-              _bottomSheetState = state; // Store the state for future updates
-            },
-            onClose: () {
-              _removeRouteInfoOverlay(); // Remove overlay when closed
-              _showButton = true; // Set _showButton to true
-            },
-          ),
-            ),
-        );
-      },
-    );
+          );
+        },
+      );
 
-    // Insert the overlay entry
-    final overlay = Overlay.of(context);
-    if (overlay != null) {
-      overlay.insert(_routeInfoOverlay!);
+      // Insert the overlay entry
+      final overlay = Overlay.of(context);
+      if (overlay != null) {
+        overlay.insert(_routeInfoOverlay!);
+      }
+    } else {
+      // If the overlay is already shown, update it
+      _updateBottomSheet(estimatedTime, distance);
     }
-  } else {
-    // If the overlay is already shown, update it
-    _updateBottomSheet(estimatedTime, distance);
   }
-}
 
 // Function to remove the overlay
-void _removeRouteInfoOverlay() {
-  _routeInfoOverlay?.remove();
-  _routeInfoOverlay = null;
-}
+  void _removeRouteInfoOverlay() {
+    _routeInfoOverlay?.remove();
+    _routeInfoOverlay = null;
+  }
+
+// Function to update the overlay content
   void _updateBottomSheet(String estimatedTime, String distance) {
     if (_bottomSheetState != null) {
       _bottomSheetState!.updateRouteInfo(estimatedTime, distance);
     }
   }
- Future<Map<String, dynamic>> startRoute(
+
+
+   StreamSubscription? progressSubscription;
+
+
+
+Future<Map<String, dynamic>> startRoute(
     String toAddress,
     Function(String estimatedTime, String distance) onRouteInfoUpdate,
 ) async {
+   if (isRouteCancelled ) {
+                // Stop updating if the route is canceled
+                 print('route stop');
+                return{};
+              }
     LatLng? deviceLocation = await _getCurrentLocation();
     if (deviceLocation == null) {
         print('Error: Unable to get device location.');
@@ -333,16 +408,22 @@ void _removeRouteInfoOverlay() {
             await calculateProgress(deviceLocation, toLocation);
 
             // Listen for progress updates from the stream
-           progressStreamController.stream.listen((progress) {
-  double distance = progress['distance'];
-  String estimatedTime = progress['estimatedTime'];
+            progressStreamSubscription = progressStreamController.stream.listen((progress) {
+              if (isRouteCancelled) {
+                // Stop updating if the route is canceled
+                progressStreamSubscription?.cancel();
+                return;
+              }
 
-  // Update the route information on the bottom sheet
-  onRouteInfoUpdate(estimatedTime, distance.toStringAsFixed(2));
+              double distance = progress['distance'];
+              String estimatedTime = progress['estimatedTime'];
 
-  // Show the bottom sheet with updated route information
-  _showRouteInfoBottomSheet(estimatedTime, distance.toStringAsFixed(2), toAddress); // Pass toAddress
-});
+              // Update the route information on the bottom sheet
+              onRouteInfoUpdate(estimatedTime, distance.toStringAsFixed(2));
+
+              // Show the bottom sheet with updated route information
+              _showRouteInfoBottomSheet(estimatedTime, distance.toStringAsFixed(2), toAddress); // Pass toAddress
+            });
 
             // Return the initial route information (can be empty since updates are handled via stream)
             return {
@@ -357,7 +438,6 @@ void _removeRouteInfoOverlay() {
 
     return {};
 }
-
 
 Future<String> _calculateETA(double distance) async {
   Location location = Location();
@@ -520,13 +600,16 @@ Future<String> _calculateETA(double distance) async {
  Future<void> calculateProgress(LatLng newDeviceLocation, LatLng destinationLocation) async {
   double distance = _calculateDistance(newDeviceLocation, destinationLocation);
   String estimatedTime = await _calculateETA(distance);
-
+ if (isRouteCancelled) {
+    return;  // If route is cancelled, stop calculating progress.
+  }
   progressStreamController.add({
     'distance': distance,
     'estimatedTime': estimatedTime,
 
     
   });
+  
 }
 
   double _calculateDistance(LatLng start, LatLng end) {
@@ -549,13 +632,21 @@ Future<String> _calculateETA(double distance) async {
   void dispose() {
     _locationSubscription.cancel();
     progressStreamController.close();
+     isRouteCancelled = true;
   }
 
   void cancelRoute() {
+     isLocationUpdatesCancelled = true;
+   isRouteCancelled = true;
+    progressStreamSubscription?.cancel();
+     progressSubscription?.cancel();
+     _routeInfoOverlay?.remove();
+    _routeInfoOverlay = null;
   // Clear all markers
   markers.clear();
    progressStreamController.close();
     _locationSubscription.cancel();
+
 
   // Remove all polylines
   polylines.removeWhere((polyline) => polyline.polylineId.value == 'route');
@@ -571,6 +662,13 @@ Future<String> _calculateETA(double distance) async {
   progressStreamController.close();
   
   print('Route canceled and all markers cleared.');
+
+  _removeRouteInfoOverlay();
+  print('Route info overlay removed.');
+
+  // 4. Optionally, reset any other state variables or stop any active calculations here
+  _destinationLocation = null;
+  print('Route canceled and state reset.');
 }
 Future<void> routeThroughLocations(
   List<LatLng> locations,
@@ -746,7 +844,7 @@ Future<bool> waitForArrival(LatLng destination) async { // Time in seconds to wa
 
 // Helper function to calculate the distance between two LatLng points
 double _calculateDistance1(LatLng start, LatLng end) {
-  const double earthRadius = 6371000; // Earth's radius in meters
+  const double earthRadius = 6371; // Earth's radius in kilometers
 
   double dLat = _degreesToRadians(end.latitude - start.latitude);
   double dLng = _degreesToRadians(end.longitude - start.longitude);
@@ -756,7 +854,8 @@ double _calculateDistance1(LatLng start, LatLng end) {
       sin(dLng / 2) * sin(dLng / 2);
   double c = 2 * atan2(sqrt(a), sqrt(1 - a));
 
-  return earthRadius * c; // Distance in meters
+  double distanceInKm = earthRadius * c;
+  return double.parse(distanceInKm.toStringAsFixed(2)); // Distance in kilometers, rounded to 2 decimal places
 }
 
 // Helper function to convert degrees to radians

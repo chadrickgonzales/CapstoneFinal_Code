@@ -105,47 +105,48 @@ class _SearchBottomSheetState extends State<SearchBottomSheet>
     return 'https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=$photoReference&key=$apiKey';
   }
 
- Future<Map<String, dynamic>> _fetchPlaceDetails(String placeId, String placeName) async {
-  Map<String, dynamic> placeDetails = {};
+  Future<Map<String, dynamic>> _fetchPlaceDetails(
+      String placeId, String placeName) async {
+    Map<String, dynamic> placeDetails = {};
 
-  if (placeId.isNotEmpty) {
-    // Fetch Google Maps API details
-    const String apiKey = 'AIzaSyAocNg3WkX5ppmhc-vTf1IHvG75EM1Rr5k'; 
-    final String url =
-        'https://maps.googleapis.com/maps/api/place/details/json?place_id=$placeId&key=$apiKey';
+    if (placeId.isNotEmpty) {
+      // Fetch Google Maps API details
+      const String apiKey = 'AIzaSyAocNg3WkX5ppmhc-vTf1IHvG75EM1Rr5k';
+      final String url =
+          'https://maps.googleapis.com/maps/api/place/details/json?place_id=$placeId&key=$apiKey';
 
-    final response = await http.get(Uri.parse(url));
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      if (data['status'] == 'OK') {
-        placeDetails = data['result'];
+      final response = await http.get(Uri.parse(url));
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['status'] == 'OK') {
+          placeDetails = data['result'];
+        } else {
+          print('Failed to fetch place details from Google Maps API');
+        }
       } else {
         print('Failed to fetch place details from Google Maps API');
       }
-    } else {
-      print('Failed to fetch place details from Google Maps API');
     }
-  }
 
-  // Fetch Firestore details based on the place name
-  try {
-    final querySnapshot = await FirebaseFirestore.instance
-        .collection('place')
-        .where('placeName', isEqualTo: placeName)
-        .get();
+    // Fetch Firestore details based on the place name
+    try {
+      final querySnapshot = await FirebaseFirestore.instance
+          .collection('place')
+          .where('placeName', isEqualTo: placeName)
+          .get();
 
-    if (querySnapshot.docs.isNotEmpty) {
-      Map<String, dynamic> firestoreData = querySnapshot.docs.first.data();
-      placeDetails.addAll(firestoreData);
-    } else {
-      print('No documents found for place name: $placeName');
+      if (querySnapshot.docs.isNotEmpty) {
+        Map<String, dynamic> firestoreData = querySnapshot.docs.first.data();
+        placeDetails.addAll(firestoreData);
+      } else {
+        print('No documents found for place name: $placeName');
+      }
+    } catch (e) {
+      print('Error fetching Firestore places: $e');
     }
-  } catch (e) {
-    print('Error fetching Firestore places: $e');
-  }
 
-  return placeDetails;
-}
+    return placeDetails;
+  }
 
   Future<List<dynamic>> _fetchFirestorePlaces(String query) async {
     try {
@@ -166,69 +167,80 @@ class _SearchBottomSheetState extends State<SearchBottomSheet>
     }
   }
 
- void _showPlaceDetails(Map<String, dynamic> place) async {
-  setState(() {
-    _selectedPlace = place;
-    _showDetails = true;
-  });
+  void _showPlaceDetails(Map<String, dynamic> place) async {
+    setState(() {
+      _selectedPlace = place;
+      _showDetails = true;
+    });
 
-  final currentUser = FirebaseAuth.instance.currentUser;
-  final userId = currentUser?.uid;
+    final currentUser = FirebaseAuth.instance.currentUser;
+    final userId = currentUser?.uid;
 
-  if (userId != null && _selectedPlace != null) {
-    // Handle placeId and placeName for both Firestore and Google Maps API
-    final placeId = _selectedPlace!['place_id'] ?? _selectedPlace!['placeId'] ?? '';
-    final placeName = _selectedPlace!['name'] ?? _selectedPlace!['placeName'] ?? '';
-    final types = _selectedPlace!['types'];
-    String category = _determineCategory(types);
+    if (userId != null && _selectedPlace != null) {
+      // Handle placeId and placeName for both Firestore and Google Maps API
+      final placeId =
+          _selectedPlace!['place_id'] ?? _selectedPlace!['placeId'] ?? '';
+      final placeName =
+          _selectedPlace!['name'] ?? _selectedPlace!['placeName'] ?? '';
+      final types = _selectedPlace!['types'];
+      String category = _determineCategory(types);
 
-    // Fetch combined place details from Firestore and Google Places API
-    try {
-      final combinedPlaceDetails = await _fetchPlaceDetails(placeId, placeName);
-      setState(() {
-        _selectedPlace = combinedPlaceDetails;
-      });
-    } catch (e) {
-      print('Error fetching place details: $e');
-    }
+      // Fetch combined place details from Firestore and Google Places API
+      try {
+        final combinedPlaceDetails =
+            await _fetchPlaceDetails(placeId, placeName);
+        setState(() {
+          _selectedPlace = combinedPlaceDetails;
+        });
+      } catch (e) {
+        print('Error fetching place details: $e');
+      }
 
-    // Save to Firestore 'recent' collection
-    try {
-      await FirebaseFirestore.instance.collection('recent').add({
-        'placeName': _selectedPlace!['name'] ?? _selectedPlace!['placeName'],
-        'placeId': _selectedPlace!['place_id'] ?? _selectedPlace!['placeId'],
-        'category': category,
-        'userId': userId,
-        'timestamp': FieldValue.serverTimestamp(),
-        'imageUrl': _selectedPlace!['imageUrl'] ?? '',
-      });
-    } catch (e) {
-      print('Error saving to Firestore: $e');
-    }
-  }
-}
-
-String _determineCategory(List<dynamic>? types) {
-  if (types != null && types is List<dynamic>) {
-    if (_containsAny(types, [
-      'tourist_attraction', 'museum', 'art_gallery', 'historical sites', 
-      'landmarks', 'park', 'amusement_park', 'aquarium', 'zoo'
-    ])) {
-      return 'Sights';
-    } else if (_containsAny(types, ['park', 'natural_feature'])) {
-      return 'Parks';
-    } else if (_containsAny(types, ['train_station', 'bus_station', 'subway_station'])) {
-      return 'Stations';
-    } else if (_containsAny(types, ['restaurant', 'cafe', 'bakery'])) {
-      return 'Food';
-    } else if (_containsAny(types, ['lodging', 'hotel', 'hostel'])) {
-      return 'Hotel';
-    } else {
-      return 'Other';
+      // Save to Firestore 'recent' collection
+      try {
+        await FirebaseFirestore.instance.collection('recent').add({
+          'placeName': _selectedPlace!['name'] ?? _selectedPlace!['placeName'],
+          'placeId': _selectedPlace!['place_id'] ?? _selectedPlace!['placeId'],
+          'category': category,
+          'userId': userId,
+          'timestamp': FieldValue.serverTimestamp(),
+          'imageUrl': _selectedPlace!['imageUrl'] ?? '',
+        });
+      } catch (e) {
+        print('Error saving to Firestore: $e');
+      }
     }
   }
-  return 'Unknown';
-}
+
+  String _determineCategory(List<dynamic>? types) {
+    if (types != null && types is List<dynamic>) {
+      if (_containsAny(types, [
+        'tourist_attraction',
+        'museum',
+        'art_gallery',
+        'historical sites',
+        'landmarks',
+        'park',
+        'amusement_park',
+        'aquarium',
+        'zoo'
+      ])) {
+        return 'Sights';
+      } else if (_containsAny(types, ['park', 'natural_feature'])) {
+        return 'Parks';
+      } else if (_containsAny(
+          types, ['train_station', 'bus_station', 'subway_station'])) {
+        return 'Stations';
+      } else if (_containsAny(types, ['restaurant', 'cafe', 'bakery'])) {
+        return 'Food';
+      } else if (_containsAny(types, ['lodging', 'hotel', 'hostel'])) {
+        return 'Hotel';
+      } else {
+        return 'Other';
+      }
+    }
+    return 'Unknown';
+  }
 
   bool _containsAny(List<dynamic> list, List<String> values) {
     // Helper function to check if list contains any of the specified values
@@ -398,7 +410,8 @@ String _determineCategory(List<dynamic>? types) {
                       //NAIBA ANG PART NA TOH
                       title: Text(
                         place['name'] ?? place['placeName'] ?? 'Unknown Place',
-                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                            color: Colors.white, fontWeight: FontWeight.bold),
                       ),
                       subtitle: Text(
                         place['formatted_address'] ??
@@ -453,479 +466,559 @@ String _determineCategory(List<dynamic>? types) {
     );
   }
 
-Widget _buildSearchResults() {
-  bool _isBookmarked = false;
-  final currentUser = FirebaseAuth.instance.currentUser;
-  if (currentUser == null) {
-    return Container(); // Return an empty container if user is not authenticated
-  }
+  Widget _buildSearchResults() {
+    bool _isBookmarked = false;
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null) {
+      return Container(); // Return an empty container if user is not authenticated
+    }
 
-  return FutureBuilder<List<DocumentSnapshot>>(
-    future: _fetchRecentPlaces(_selectedCategory),
-    builder: (context, snapshot) {
-      if (snapshot.connectionState == ConnectionState.waiting) {
-        return Container(
-          height: 100.0,
-          alignment: Alignment.center,
-          child: CircularProgressIndicator(),
-        );
-      }
+    return FutureBuilder<List<DocumentSnapshot>>(
+      future: _fetchRecentPlaces(_selectedCategory),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Container(
+            height: 100.0,
+            alignment: Alignment.center,
+            child: CircularProgressIndicator(),
+          );
+        }
 
-      final recentPlaces = snapshot.data ?? [];
-      if (recentPlaces.isEmpty) {
-        return Container(
-          height: 100.0,
-          alignment: Alignment.center,
-          child: Text(
-            'Search history is empty',
-            style: TextStyle(color: Colors.white, fontSize: 24),
-          ),
-        );
-      }
+        final recentPlaces = snapshot.data ?? [];
+        if (recentPlaces.isEmpty) {
+          return Container(
+            height: 100.0,
+            alignment: Alignment.center,
+            child: Text(
+              'Search history is empty',
+              style: TextStyle(color: Colors.white, fontSize: 24),
+            ),
+          );
+        }
 
-      // Use a Set to track unique placeIds
-      Set<String> displayedPlaceIds = {};
+        // Use a Set to track unique placeIds
+        Set<String> displayedPlaceIds = {};
 
-      // Sort recent places by timestamp in descending order
-      recentPlaces.sort((a, b) {
-        Timestamp timestampA = a['timestamp'];
-        Timestamp timestampB = b['timestamp'];
-        return timestampB.compareTo(timestampA); // Sort in descending order
-      });
+        // Sort recent places by timestamp in descending order
+        recentPlaces.sort((a, b) {
+          Timestamp timestampA = a['timestamp'];
+          Timestamp timestampB = b['timestamp'];
+          return timestampB.compareTo(timestampA); // Sort in descending order
+        });
 
-      return Expanded(
-        child: ListView(
-          padding: EdgeInsets.symmetric(horizontal: 16.0),
-          children: recentPlaces.map((doc) {
-            final placeName = doc['placeName'];
-            final placeId = doc['placeId'];
-            final imageUrl = doc['imageUrl'] ?? '';
+        return Expanded(
+          child: ListView(
+            padding: EdgeInsets.symmetric(horizontal: 16.0),
+            children: recentPlaces.map((doc) {
+              final placeName = doc['placeName'];
+              final placeId = doc['placeId'];
+              final imageUrl = doc['imageUrl'] ?? '';
 
-            if (displayedPlaceIds.contains(placeId)) {
-              return Container();
-            }
+              if (displayedPlaceIds.contains(placeId)) {
+                return Container();
+              }
 
-            displayedPlaceIds.add(placeId);
+              displayedPlaceIds.add(placeId);
 
-            return GestureDetector(
-              onTap: () async {
-                try {
-                  final placeDetails = await _fetchPlaceDetails(placeId, placeName);
-                  _showPlaceDetails(placeDetails);
-                } catch (e) {
-                  print('Error fetching place details or Firestore places: $e');
-                }
-              },
-              child: Stack(
-                children: [
-                  Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(16.0),
-                      color: Color.fromRGBO(141, 138, 140, 0.8),
-                      border: Border.all(color: Colors.white),
-                    ),
-                    margin: EdgeInsets.symmetric(vertical: 8.0),
-                    height: 200.0,
-                    child: Stack(
-                      fit: StackFit.expand,
-                      children: [
-                        // Image Widget
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(16.0),
-                          child: imageUrl.isNotEmpty
-                              ? Image.network(
-                                  imageUrl,
-                                  width: double.infinity,
-                                  height: 200.0,
-                                  fit: BoxFit.cover,
-                                )
-                              : FutureBuilder(
-                                  future: _fetchPlaceDetails(placeId, placeName),
-                                  builder: (context, snapshot) {
-                                    if (snapshot.connectionState == ConnectionState.waiting) {
-                                      return Container(
-                                        color: Colors.grey,
-                                        width: double.infinity,
-                                        height: 200.0,
-                                      );
-                                    }
-                                    if (snapshot.hasError) {
-                                      return Container(
-                                        color: Colors.grey,
-                                        width: double.infinity,
-                                        height: 200.0,
-                                      );
-                                    }
-
-                                    final placeDetails = snapshot.data as Map<String, dynamic>?;
-                                    final photoReference = placeDetails?['photos']?[0]['photo_reference'];
-
-                                    return ClipRRect(
-                                      borderRadius: BorderRadius.circular(16.0),
-                                      child: Image.network(
-                                        _getPhotoUrl(photoReference) ?? '',
-                                        width: double.infinity,
-                                        height: 200.0,
-                                        fit: BoxFit.cover,
-                                      ),
-                                    );
-                                  },
-                                ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Positioned(
-                    left: 0.0,
-                    bottom: 8.0,
-                    right: 0.0,
-                    child: Container(
-                      padding: EdgeInsets.all(16.0),
+              return GestureDetector(
+                onTap: () async {
+                  try {
+                    final placeDetails =
+                        await _fetchPlaceDetails(placeId, placeName);
+                    _showPlaceDetails(placeDetails);
+                  } catch (e) {
+                    print(
+                        'Error fetching place details or Firestore places: $e');
+                  }
+                },
+                child: Stack(
+                  children: [
+                    Container(
                       decoration: BoxDecoration(
-                        borderRadius: BorderRadius.only(
-                          bottomLeft: Radius.circular(16.0),
-                          bottomRight: Radius.circular(16.0),
-                        ),
-                        color: Colors.black54,
+                        borderRadius: BorderRadius.circular(16.0),
+                        color: Color.fromRGBO(141, 138, 140, 0.8),
+                        border: Border.all(color: Colors.white),
                       ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                      margin: EdgeInsets.symmetric(vertical: 8.0),
+                      height: 200.0,
+                      child: Stack(
+                        fit: StackFit.expand,
                         children: [
-                          // Text Column (placeName and location)
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  placeName ?? 'Unknown Place',
-                                  style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 18.0,
-                                      fontWeight: FontWeight.bold),
-                                ),
-                                SizedBox(height: 8.0),
-                                FutureBuilder(
-                                  future: _fetchPlaceDetails(placeId, placeName),
-                                  builder: (context, snapshot) {
-                                    if (snapshot.connectionState == ConnectionState.waiting) {
-                                      return CircularProgressIndicator();
-                                    }
-                                    if (snapshot.hasError) {
-                                      return Text(
-                                        'Error fetching location',
-                                        style: TextStyle(color: Colors.white),
+                          // Image Widget
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(16.0),
+                            child: imageUrl.isNotEmpty
+                                ? Image.network(
+                                    imageUrl,
+                                    width: double.infinity,
+                                    height: 200.0,
+                                    fit: BoxFit.cover,
+                                  )
+                                : FutureBuilder(
+                                    future:
+                                        _fetchPlaceDetails(placeId, placeName),
+                                    builder: (context, snapshot) {
+                                      if (snapshot.connectionState ==
+                                          ConnectionState.waiting) {
+                                        return Container(
+                                          color: Colors.grey,
+                                          width: double.infinity,
+                                          height: 200.0,
+                                        );
+                                      }
+                                      if (snapshot.hasError) {
+                                        return Container(
+                                          color: Colors.grey,
+                                          width: double.infinity,
+                                          height: 200.0,
+                                        );
+                                      }
+
+                                      final placeDetails = snapshot.data
+                                          as Map<String, dynamic>?;
+                                      final photoReference =
+                                          placeDetails?['photos']?[0]
+                                              ['photo_reference'];
+
+                                      return ClipRRect(
+                                        borderRadius:
+                                            BorderRadius.circular(16.0),
+                                        child: Image.network(
+                                          _getPhotoUrl(photoReference) ?? '',
+                                          width: double.infinity,
+                                          height: 200.0,
+                                          fit: BoxFit.cover,
+                                        ),
                                       );
-                                    }
-
-                                    final placeDetails = snapshot.data as Map<String, dynamic>?;
-                                    final location = placeDetails?['formatted_address'] ?? 'Location not available';
-
-                                    return Text(
-                                      location,
-                                      style: TextStyle(color: Colors.white),
-                                    );
-                                  },
-                                ),
-                              ],
-                            ),
-                          ),
-
-                          // Icon Button (bookmark)
-                          IconButton(
-                            icon: Icon(
-                              _isBookmarked ? Icons.bookmark : Icons.bookmark_outline_rounded,
-                            ),
-                            color: Colors.white,
-                            onPressed: () async {
-                              setState(() {
-                                _isBookmarked = !_isBookmarked;
-                              });
-
-                              if (currentUser != null && placeId != null) {
-                                final username = await _fetchUsername(currentUser.uid);
-
-                                if (_isBookmarked) {
-                                  // Save place details to Firestore collection 'save'
-                                  await _firestore.collection('save').add({
-                                    'userId': currentUser.uid,
-                                    'username': username,
-                                    'placeId': placeId,
-                                    'placeName': placeName,
-                                    'imageUrl': imageUrl, // Include imageUrl here
-                                    'timestamp': FieldValue.serverTimestamp(),
-                                  });
-                                } else {
-                                  // Remove the saved place from Firestore collection 'save'
-                                  final snapshot = await _firestore
-                                      .collection('save')
-                                      .where('userId', isEqualTo: currentUser.uid)
-                                      .where('placeId', isEqualTo: placeId)
-                                      .get();
-
-                                  for (var doc in snapshot.docs) {
-                                    await doc.reference.delete();
-                                  }
-                                }
-                              }
-                            },
+                                    },
+                                  ),
                           ),
                         ],
                       ),
                     ),
+                    Positioned(
+                      left: 0.0,
+                      bottom: 8.0,
+                      right: 0.0,
+                      child: Container(
+                        padding: EdgeInsets.all(16.0),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.only(
+                            bottomLeft: Radius.circular(16.0),
+                            bottomRight: Radius.circular(16.0),
+                          ),
+                          color: Colors.black54,
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Text Column (placeName and location)
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    placeName ?? 'Unknown Place',
+                                    style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 18.0,
+                                        fontWeight: FontWeight.bold),
+                                  ),
+                                  SizedBox(height: 8.0),
+                                  FutureBuilder(
+                                    future:
+                                        _fetchPlaceDetails(placeId, placeName),
+                                    builder: (context, snapshot) {
+                                      if (snapshot.connectionState ==
+                                          ConnectionState.waiting) {
+                                        return CircularProgressIndicator();
+                                      }
+                                      if (snapshot.hasError) {
+                                        return Text(
+                                          'Error fetching location',
+                                          style: TextStyle(color: Colors.white),
+                                        );
+                                      }
+
+                                      final placeDetails = snapshot.data
+                                          as Map<String, dynamic>?;
+                                      final location =
+                                          placeDetails?['formatted_address'] ??
+                                              'Location not available';
+
+                                      return Text(
+                                        location,
+                                        style: TextStyle(color: Colors.white),
+                                      );
+                                    },
+                                  ),
+                                ],
+                              ),
+                            ),
+
+                            // Icon Button (bookmark)
+                            IconButton(
+                              icon: Icon(
+                                _isBookmarked
+                                    ? Icons.bookmark
+                                    : Icons.bookmark_outline_rounded,
+                              ),
+                              color: Colors.white,
+                              onPressed: () async {
+                                setState(() {
+                                  _isBookmarked = !_isBookmarked;
+                                });
+
+                                if (currentUser != null && placeId != null) {
+                                  final username =
+                                      await _fetchUsername(currentUser.uid);
+
+                                  if (_isBookmarked) {
+                                    // Save place details to Firestore collection 'save'
+                                    await _firestore.collection('save').add({
+                                      'userId': currentUser.uid,
+                                      'username': username,
+                                      'placeId': placeId,
+                                      'placeName': placeName,
+                                      'imageUrl':
+                                          imageUrl, // Include imageUrl here
+                                      'timestamp': FieldValue.serverTimestamp(),
+                                    });
+
+                                    // Show 'Place saved!' dialog
+                                    showDialog(
+                                      context: context,
+                                      builder: (BuildContext context) {
+                                        return AlertDialog(
+                                          title: Text('Place saved!'),
+                                          actions: <Widget>[
+                                            TextButton(
+                                              onPressed: () {
+                                                Navigator.of(context).pop();
+                                              },
+                                              child: Text('Ok'),
+                                            ),
+                                          ],
+                                        );
+                                      },
+                                    );
+                                  } else {
+                                    // Remove the saved place from Firestore collection 'save'
+                                    final snapshot = await _firestore
+                                        .collection('save')
+                                        .where('userId',
+                                            isEqualTo: currentUser.uid)
+                                        .where('placeId', isEqualTo: placeId)
+                                        .get();
+
+                                    for (var doc in snapshot.docs) {
+                                      await doc.reference.delete();
+                                    }
+                                  }
+                                }
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }).toList(),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildPlaceDetails(Map<String, dynamic> place) {
+    if (_selectedPlace == null) return Container();
+
+    return Expanded(
+      child: SingleChildScrollView(
+        physics: ClampingScrollPhysics(),
+        child: Container(
+          padding: EdgeInsets.all(16.0),
+          color: Color.fromARGB(255, 22, 23, 43),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Row to align place name and bookmark icon
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Text(
+                      place['name'] ?? place['placeName'] ?? 'Unknown Place',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 8.0),
+                  IconButton(
+                    icon: Icon(
+                      Icons.bookmark,
+                      color: Colors.white,
+                    ),
+                    onPressed: () async {
+                      final currentUser = FirebaseAuth.instance.currentUser;
+                      if (currentUser != null && _selectedPlace != null) {
+                        // Save the place
+                        final username = await _fetchUsername(currentUser.uid);
+
+                        // Fetch image URL from Firestore place document
+                        final placeDoc = await _firestore
+                            .collection('place')
+                            .doc(_selectedPlace!['placeId'])
+                            .get();
+                        final imageUrl = placeDoc.data()?['imageUrl'] ?? '';
+
+                        // Save place details to Firestore collection 'save'
+                        String placeIdToUpload = _selectedPlace!['place_id'] ??
+                            _selectedPlace!['placeId'] ??
+                            '';
+
+                        await _firestore.collection('save').add({
+                          'userId': currentUser.uid,
+                          'username': username,
+                          'placeId': placeIdToUpload,
+                          'placeName': _selectedPlace!['placeName'] ??
+                              _selectedPlace!['name'],
+                          'imageUrl': imageUrl, // Include the image URL
+                          'timestamp': FieldValue.serverTimestamp(),
+                        });
+
+                        // Show 'Place saved!' dialog
+                        showDialog(
+                          context: context,
+                          builder: (BuildContext context) {
+                            return AlertDialog(
+                              title: Text('Place saved!'),
+                              actions: <Widget>[
+                                TextButton(
+                                  onPressed: () {
+                                    Navigator.of(context).pop();
+                                  },
+                                  child: Text('Ok'),
+                                ),
+                              ],
+                            );
+                          },
+                        );
+                      }
+                    },
                   ),
                 ],
               ),
-            );
-          }).toList(),
-        ),
-      );
-    },
-  );
-}
+              SizedBox(height: 16.0),
+              // Display image from Firestore if available, otherwise from Google Maps API
+              FutureBuilder<String?>(
+                future: _fetchImage(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return Center(child: CircularProgressIndicator());
+                  } else if (snapshot.hasError) {
+                    return Text('Error loading image',
+                        style: TextStyle(color: Colors.white));
+                  }
 
-Widget _buildPlaceDetails(Map<String, dynamic> place) {
-  if (_selectedPlace == null) return Container();
-
-  return Expanded(
-    child: SingleChildScrollView(
-      physics: ClampingScrollPhysics(),
-      child: Container(
-        padding: EdgeInsets.all(16.0),
-        color: Color.fromARGB(255, 22, 23, 43),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Row to align place name and bookmark icon
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Text(
-                    place['name'] ?? place['placeName'] ?? 'Unknown Place',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-                SizedBox(width: 8.0),
-                IconButton(
-                  icon: Icon(
-                    Icons.bookmark,
-                    color: Colors.white,
-                  ),
-                  onPressed: () async {
-                    final currentUser = FirebaseAuth.instance.currentUser;
-                    if (currentUser != null && _selectedPlace != null) {
-                      final username = await _fetchUsername(currentUser.uid);
-
-                      // Fetch image URL from Firestore place document
-                      final placeDoc = await _firestore
-                          .collection('place')
-                          .doc(_selectedPlace!['placeId'])
-                          .get();
-                      final imageUrl = placeDoc.data()?['imageUrl'] ?? '';
-
-                      // Save place details to Firestore collection 'save'
-                      String placeIdToUpload = _selectedPlace!['place_id'] ??
-                          _selectedPlace!['placeId'] ??
-                          '';
-
-                      await _firestore.collection('save').add({
-                        'userId': currentUser.uid,
-                        'username': username,
-                        'placeId': placeIdToUpload,
-                        'placeName': _selectedPlace!['placeName'] ?? _selectedPlace!['name'],
-                        'imageUrl': imageUrl, // Include the image URL
-                        'timestamp': FieldValue.serverTimestamp(),
-                      });
-                    }
-                  },
-                ),
-              ],
-            ),
-            SizedBox(height: 16.0),
-            // Display image from Firestore if available, otherwise from Google Maps API
-            FutureBuilder<String?>(
-              future: _fetchImage(),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return Center(child: CircularProgressIndicator());
-                } else if (snapshot.hasError) {
-                  return Text('Error loading image', style: TextStyle(color: Colors.white));
-                }
-
-                final imageUrl = snapshot.data;
-                if (imageUrl != null && imageUrl.isNotEmpty) {
-                  return Image.network(
-                    imageUrl,
-                    height: 200.0,
-                    width: MediaQuery.of(context).size.width,
-                    fit: BoxFit.cover,
-                  );
-                } else if (_selectedPlace!['photos'] != null &&
-                    _selectedPlace!['photos'].isNotEmpty) {
-                  return Image.network(
-                    _getPhotoUrl(_selectedPlace!['photos'][0]['photo_reference']) ?? '',
-                    height: 200.0,
-                    width: MediaQuery.of(context).size.width,
-                    fit: BoxFit.cover,
-                  );
-                } else {
-                  return SizedBox.shrink();
-                }
-              },
-            ),
-            SizedBox(height: 16.0),
-            Text(
-              place['formatted_address'] ?? place['description'] ?? 'Address not available',
-              style: TextStyle(color: Colors.white, fontSize: 18.0),
-            ),
-            SizedBox(height: 8.0),
-            Text(
-              'Rating:',
-              style: TextStyle(color: Colors.white, fontSize: 18.0),
-            ),
-            SizedBox(height: 8.0),
-            RatingBar.builder(
-              initialRating: _selectedPlace!['rating']?.toDouble() ?? 0.0,
-              minRating: 1,
-              direction: Axis.horizontal,
-              allowHalfRating: true,
-              itemCount: 5,
-              itemSize: 24.0,
-              itemBuilder: (context, _) => Icon(
-                Icons.star,
-                color: Colors.amber,
-              ),
-              onRatingUpdate: (rating) {
-                setState(() {
-                  selectedRating = rating;
-                });
-              },
-            ),
-            SizedBox(height: 16.0),
-            Text(
-              'Leave a Comment:',
-              style: TextStyle(color: Colors.white, fontSize: 18.0),
-            ),
-            SizedBox(height: 8.0),
-            TextField(
-              controller: commentTextController,
-              decoration: InputDecoration(
-                hintText: 'Write your comment here...',
-                hintStyle: TextStyle(color: Colors.white70),
-                border: OutlineInputBorder(
-                  borderSide: BorderSide(color: Colors.white),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: Colors.white),
-                ),
-              ),
-              style: TextStyle(color: Colors.white),
-              maxLines: null,
-            ),
-            SizedBox(height: 16.0),
-            Align(
-              alignment: Alignment.centerRight,
-              child: ElevatedButton(
-                onPressed: () async {
-                  final currentUser = FirebaseAuth.instance.currentUser;
-                  if (currentUser != null && _selectedPlace != null) {
-                    final username = await _fetchUsername(currentUser.uid);
-                    final comment = commentTextController.text.trim();
-                    final rating = selectedRating;
-
-                    final placeDoc = await _firestore
-                        .collection('place')
-                        .doc(_selectedPlace!['placeId'])
-                        .get();
-                    final placeIdFromPlaceCollection = placeDoc.data()?['placeId'];
-
-                    await _firestore.collection('ratings').add({
-                      'placeName': _selectedPlace!['name'] ?? _selectedPlace!['placeName'],
-                      'userId': currentUser.uid,
-                      'username': username,
-                      'place_id': _selectedPlace!['place_id'],
-                      'placeId': placeIdFromPlaceCollection,
-                      'comment': comment,
-                      'rating': rating,
-                      'timestamp': FieldValue.serverTimestamp(),
-                    });
-
-                    commentTextController.clear();
-                    setState(() {
-                      selectedRating = 0.0;
-                    });
+                  final imageUrl = snapshot.data;
+                  if (imageUrl != null && imageUrl.isNotEmpty) {
+                    return Image.network(
+                      imageUrl,
+                      height: 200.0,
+                      width: MediaQuery.of(context).size.width,
+                      fit: BoxFit.cover,
+                    );
+                  } else if (_selectedPlace!['photos'] != null &&
+                      _selectedPlace!['photos'].isNotEmpty) {
+                    return Image.network(
+                      _getPhotoUrl(_selectedPlace!['photos'][0]
+                              ['photo_reference']) ??
+                          '',
+                      height: 200.0,
+                      width: MediaQuery.of(context).size.width,
+                      fit: BoxFit.cover,
+                    );
+                  } else {
+                    return SizedBox.shrink();
                   }
                 },
-                child: Text('Submit'),
               ),
-            ),
-            SizedBox(height: 16.0),
-            Text(
-              'Reviews:',
-              style: TextStyle(color: Colors.white, fontSize: 18.0),
-            ),
-            SizedBox(height: 8.0),
-            StreamBuilder<QuerySnapshot>(
-              stream: _firestore
-                  .collection('ratings')
-                  .where('placeId', isEqualTo: _selectedPlace!['placeId'])
-                  .where('place_id', isEqualTo: _selectedPlace!['place_id'])
-                  .snapshots(),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return Center(child: CircularProgressIndicator());
-                } else if (snapshot.hasError) {
-                  return Text('Error loading reviews', style: TextStyle(color: Colors.white));
-                }
+              SizedBox(height: 16.0),
+              Text(
+                place['formatted_address'] ??
+                    place['description'] ??
+                    'Address not available',
+                style: TextStyle(color: Colors.white, fontSize: 18.0),
+              ),
+              SizedBox(height: 8.0),
+              Text(
+                'Rating:',
+                style: TextStyle(color: Colors.white, fontSize: 18.0),
+              ),
+              SizedBox(height: 8.0),
+              RatingBar.builder(
+                initialRating: _selectedPlace!['rating']?.toDouble() ?? 0.0,
+                minRating: 1,
+                direction: Axis.horizontal,
+                allowHalfRating: true,
+                itemCount: 5,
+                itemSize: 24.0,
+                itemBuilder: (context, _) => Icon(
+                  Icons.star,
+                  color: Colors.amber,
+                ),
+                onRatingUpdate: (rating) {
+                  setState(() {
+                    selectedRating = rating;
+                  });
+                },
+              ),
+              SizedBox(height: 16.0),
+              Text(
+                'Leave a Comment:',
+                style: TextStyle(color: Colors.white, fontSize: 18.0),
+              ),
+              SizedBox(height: 8.0),
+              // On TextField tap, open dialog
+              GestureDetector(
+                onTap: () {
+                  _showCommentDialog(context);
+                },
+                child: Text(
+                  'Tap to write a comment...',
+                  style: TextStyle(color: Colors.white, fontSize: 16.0),
+                ),
+              ),
+              SizedBox(height: 16.0),
+              Text(
+                'Reviews:',
+                style: TextStyle(color: Colors.white, fontSize: 18.0),
+              ),
+              SizedBox(height: 8.0),
+              StreamBuilder<QuerySnapshot>(
+                stream: _firestore
+                    .collection('ratings')
+                    .where('placeId', isEqualTo: _selectedPlace!['placeId'])
+                    .where('place_id', isEqualTo: _selectedPlace!['place_id'])
+                    .snapshots(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return Center(child: CircularProgressIndicator());
+                  } else if (snapshot.hasError) {
+                    return Text('Error loading reviews',
+                        style: TextStyle(color: Colors.white));
+                  }
 
-                final reviews = snapshot.hasData ? snapshot.data!.docs : [];
+                  final reviews = snapshot.hasData ? snapshot.data!.docs : [];
 
-                if (reviews.isEmpty) {
-                  return Text(
-                    'No reviews yet.',
-                    style: TextStyle(color: Colors.white),
-                  );
-                }
-
-                return Column(
-                  children: reviews.map((review) {
-                    return ListTile(
-                      title: Text(
-                        review['username'] ?? 'Anonymous',
-                        style: TextStyle(color: Colors.white),
-                      ),
-                      subtitle: Text(
-                        review['comment'] ?? '',
-                        style: TextStyle(color: Colors.white70),
-                      ),
-                      trailing: RatingBarIndicator(
-                        rating: review['rating']?.toDouble() ?? 0.0,
-                        itemBuilder: (context, index) => Icon(
-                          Icons.star,
-                          color: Colors.amber,
-                        ),
-                        itemCount: 5,
-                        itemSize: 20.0,
-                        direction: Axis.horizontal,
-                      ),
+                  if (reviews.isEmpty) {
+                    return Text(
+                      'No reviews yet.',
+                      style: TextStyle(color: Colors.white),
                     );
-                  }).toList(),
-                );
-              },
-            ),
-          ],
+                  }
+
+                  return Column(
+                    children: reviews.map((review) {
+                      return ListTile(
+                        title: Text(
+                          review['username'] ?? 'Anonymous',
+                          style: TextStyle(color: Colors.white),
+                        ),
+                        subtitle: Text(
+                          review['comment'] ?? '',
+                          style: TextStyle(color: Colors.white70),
+                        ),
+                        trailing: RatingBarIndicator(
+                          rating: review['rating']?.toDouble() ?? 0.0,
+                          itemBuilder: (context, index) => Icon(
+                            Icons.star,
+                            color: Colors.amber,
+                          ),
+                          itemCount: 5,
+                          itemSize: 20.0,
+                          direction: Axis.horizontal,
+                        ),
+                      );
+                    }).toList(),
+                  );
+                },
+              ),
+            ],
+          ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
+
+// Function to show the comment input dialog
+  void _showCommentDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Leave a Comment'),
+          content: TextField(
+            controller: commentTextController,
+            decoration: InputDecoration(hintText: 'Write your comment here...'),
+          ),
+          actions: [
+            ElevatedButton(
+              onPressed: () async {
+                final currentUser = FirebaseAuth.instance.currentUser;
+                if (currentUser != null && _selectedPlace != null) {
+                  final username = await _fetchUsername(currentUser.uid);
+                  final comment = commentTextController.text.trim();
+                  final rating = selectedRating;
+
+                  // Fetch the place document to get the placeId
+                  final placeDoc = await _firestore
+                      .collection('place')
+                      .doc(_selectedPlace!['placeId'])
+                      .get();
+                  final placeIdFromPlaceCollection =
+                      placeDoc.data()?['placeId'];
+
+                  // Add comment and rating to Firestore
+                  await _firestore.collection('ratings').add({
+                    'placeName':
+                        _selectedPlace!['name'] ?? _selectedPlace!['placeName'],
+                    'userId': currentUser.uid,
+                    'username': username,
+                    'place_id': _selectedPlace!['place_id'],
+                    'placeId': placeIdFromPlaceCollection,
+                    'comment': comment,
+                    'rating': rating,
+                    'timestamp': FieldValue.serverTimestamp(),
+                  });
+
+                  // Clear the comment and reset the rating
+                  commentTextController.clear();
+                  setState(() {
+                    selectedRating = 0.0;
+                  });
+
+                  // Close the dialog
+                  Navigator.of(context).pop();
+                }
+              },
+              child: Text('Submit'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   Future<String?> _fetchImage() async {
     try {
       final snapshot = await _firestore

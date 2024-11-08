@@ -17,7 +17,7 @@ Future<void> displayBottomSheet_place(BuildContext context) async {
     isScrollControlled: true, // Allows the bottom sheet to take more space
     builder: (context) {
       return FractionallySizedBox(
-        heightFactor: 0.9, // Set the height as 80% of the screen height
+        heightFactor: 0.8, // Set the height as 80% of the screen height
         child: AddPlaceBottomSheet(
           onPlaceAdded: (String placeName, String description, String address,
               LatLng location, File? image, String category) async {
@@ -170,134 +170,41 @@ class _AddPlaceBottomSheetState extends State<AddPlaceBottomSheet> {
             child: Text(
               "Provide some information about this place. If this place is added to Maps, it will appear publicly.",
               style: TextStyle(
-                fontSize: 18.0, // Increase font size
+                fontSize: 14.0, // Increase font size
                 color: Colors.white70, // Normal white text
               ),
             ),
           ),
           SizedBox(height: 40.0), // Space before the input fields
 
-          // Input fields for place details
-// Place name TextField
-          Padding(
-            padding: const EdgeInsets.symmetric(
-                horizontal: 24.0), // Horizontal padding to center the input
-            child: Container(
-              width: MediaQuery.of(context).size.width *
-                  0.75, // 75% of screen width
-              child: TextField(
-                controller: _placeNameController,
-                decoration: InputDecoration(
-                  hintText: 'Random',
-                  hintStyle: TextStyle(color: Colors.white70),
-                  labelText: 'Place name (required)*',
-                  floatingLabelBehavior: FloatingLabelBehavior.always,
-                  labelStyle: TextStyle(
-                    color: Colors.white, // Label color
-                  ),
-                  filled: true,
-                  fillColor: Colors.black.withOpacity(0.2), // Background color
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10.0),
-                    borderSide: BorderSide(
-                      color: Colors.white, // Border color
-                    ),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10.0),
-                    borderSide: BorderSide(
-                      color: Colors.white, // Border color
-                    ),
-                  ),
-                  contentPadding: EdgeInsets.symmetric(
-                      horizontal: 16.0,
-                      vertical: 12.0), // Padding inside the field
-                ),
-                style: TextStyle(color: Colors.white), // Input text color
-              ),
-            ),
+          // Place name TextField - now shown in a dialog
+          _buildTextFieldDialog(
+            context,
+            _placeNameController,
+            'Place name (required)*',
+            'Place Name',
           ),
           SizedBox(height: 16.0),
 
-// Description TextField
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0),
-            child: Container(
-              width: MediaQuery.of(context).size.width *
-                  0.75, // 75% of screen width
-              child: TextField(
-                controller: _descriptionController,
-                decoration: InputDecoration(
-                  hintText: 'Description',
-                  hintStyle: TextStyle(color: Colors.white70),
-                  labelText: 'Description',
-                  floatingLabelBehavior: FloatingLabelBehavior.always,
-                  labelStyle: TextStyle(
-                    color: Colors.white,
-                  ),
-                  filled: true,
-                  fillColor: Colors.black.withOpacity(0.2),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10.0),
-                    borderSide: BorderSide(
-                      color: Colors.white,
-                    ),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10.0),
-                    borderSide: BorderSide(
-                      color: Colors.white,
-                    ),
-                  ),
-                  contentPadding:
-                      EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-                ),
-                style: TextStyle(color: Colors.white),
-              ),
-            ),
+          // Description TextField - now shown in a dialog
+          _buildTextFieldDialog(
+            context,
+            _descriptionController,
+            'Description',
+            'Description',
           ),
           SizedBox(height: 16.0),
 
-// Address TextField
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0),
-            child: Container(
-              width: MediaQuery.of(context).size.width *
-                  0.75, // 75% of screen width
-              child: TextField(
-                controller: _addressController,
-                decoration: InputDecoration(
-                  hintText: 'Address',
-                  hintStyle: TextStyle(color: Colors.white70),
-                  labelText: 'Address (required)*',
-                  floatingLabelBehavior: FloatingLabelBehavior.always,
-                  labelStyle: TextStyle(
-                    color: Colors.white,
-                  ),
-                  filled: true,
-                  fillColor: Colors.black.withOpacity(0.2),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10.0),
-                    borderSide: BorderSide(
-                      color: Colors.white,
-                    ),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10.0),
-                    borderSide: BorderSide(
-                      color: Colors.white,
-                    ),
-                  ),
-                  contentPadding:
-                      EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-                ),
-                style: TextStyle(color: Colors.white),
-              ),
-            ),
+          // Address TextField - now shown in a dialog
+          _buildTextFieldDialog(
+            context,
+            _addressController,
+            'Address (required)*',
+            'Address',
           ),
           SizedBox(height: 16.0),
 
-// Category DropdownButtonFormField
+          // Category DropdownButtonFormField
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24.0),
             child: Container(
@@ -368,7 +275,7 @@ class _AddPlaceBottomSheetState extends State<AddPlaceBottomSheet> {
                     _selectedLocation == null
                         ? 'Pick Location'
                         : 'Change Location',
-                    style: TextStyle(color: Colors.white, fontSize: 18),
+                    style: TextStyle(color: Colors.white, fontSize: 12),
                   ),
                   style: ButtonStyle(
                     padding: MaterialStateProperty.all<EdgeInsets>(
@@ -390,7 +297,7 @@ class _AddPlaceBottomSheetState extends State<AddPlaceBottomSheet> {
                       color: Colors.white), // Icon on the left
                   label: Text(
                     _selectedImage == null ? 'Add Image' : 'Change Image',
-                    style: TextStyle(color: Colors.white, fontSize: 18),
+                    style: TextStyle(color: Colors.white, fontSize: 12),
                   ),
                   style: ButtonStyle(
                     padding: MaterialStateProperty.all<EdgeInsets>(
@@ -404,7 +311,7 @@ class _AddPlaceBottomSheetState extends State<AddPlaceBottomSheet> {
               ),
             ],
           ),
-          SizedBox(height: 30.0),
+          SizedBox(height: 10.0),
 
           // Bottom section with Cancel and Submit buttons
           Row(
@@ -427,13 +334,9 @@ class _AddPlaceBottomSheetState extends State<AddPlaceBottomSheet> {
                       EdgeInsets.symmetric(vertical: 16.0),
                     ),
                     side: MaterialStateProperty.all<BorderSide>(
-                      BorderSide(
-                          color:
-                              Color.fromARGB(255, 177, 55, 78)), // Border color
-                    ),
+                        BorderSide(color: Color.fromARGB(255, 177, 55, 78))),
                     backgroundColor: MaterialStateProperty.all<Color>(
-                      Color.fromARGB(
-                          255, 177, 55, 78), // Transparent background
+                      Color.fromARGB(255, 177, 55, 78),
                     ),
                   ),
                 ),
@@ -456,8 +359,27 @@ class _AddPlaceBottomSheetState extends State<AddPlaceBottomSheet> {
                         _selectedImage,
                         _selectedCategory,
                       );
-                      Navigator.pop(
-                          context); // Close the bottom sheet after submission
+
+                      // Show the success message using a dialog
+                      showDialog(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return AlertDialog(
+                            title: Text('Success'),
+                            content: Text('Added place successfully!'),
+                            actions: <Widget>[
+                              TextButton(
+                                child: Text('OK'),
+                                onPressed: () {
+                                  Navigator.pop(context); // Close the dialog
+                                  Navigator.pop(
+                                      context); // Close the bottom sheet
+                                },
+                              ),
+                            ],
+                          );
+                        },
+                      );
                     } else {
                       // Show error message or handle empty fields
                       showDialog(
@@ -489,8 +411,7 @@ class _AddPlaceBottomSheetState extends State<AddPlaceBottomSheet> {
                       EdgeInsets.symmetric(vertical: 16.0),
                     ),
                     backgroundColor: MaterialStateProperty.all<Color>(
-                      Color.fromARGB(255, 132, 143,
-                          200), // Custom color for the Submit button
+                      Colors.blue,
                     ),
                   ),
                 ),
@@ -498,6 +419,76 @@ class _AddPlaceBottomSheetState extends State<AddPlaceBottomSheet> {
             ],
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildTextFieldDialog(
+    BuildContext context,
+    TextEditingController controller,
+    String label,
+    String hint,
+  ) {
+    return GestureDetector(
+      onTap: () {
+        showDialog(
+          context: context,
+          builder: (context) {
+            return AlertDialog(
+              backgroundColor: Colors.black.withOpacity(0.9),
+              title: Text(label, style: TextStyle(color: Colors.white)),
+              content: TextField(
+                controller: controller,
+                style: TextStyle(color: Colors.white),
+                decoration: InputDecoration(
+                  hintText: hint,
+                  hintStyle: TextStyle(color: Colors.white),
+                  border: InputBorder.none,
+                  contentPadding: EdgeInsets.all(16.0),
+                ),
+              ),
+              actions: <Widget>[
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context); // Close the dialog
+                  },
+                  child: Text('Cancel', style: TextStyle(color: Colors.white)),
+                ),
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context); // Close the dialog
+                  },
+                  child: Text('Ok', style: TextStyle(color: Colors.white)),
+                ),
+              ],
+            );
+          },
+        );
+      },
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+        decoration: BoxDecoration(
+          color: Colors.black.withOpacity(0.2),
+          borderRadius: BorderRadius.circular(10.0),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              controller.text.isEmpty
+                  ? hint
+                  : controller.text.length > 15
+                      ? controller.text
+                          .substring(0, 15) // Limit to 15 characters
+                      : controller.text,
+              style: TextStyle(color: Colors.white),
+            ),
+            Icon(
+              Icons.edit,
+              color: Colors.white,
+            ),
+          ],
+        ),
       ),
     );
   }

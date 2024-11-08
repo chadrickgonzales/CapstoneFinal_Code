@@ -328,36 +328,7 @@ Widget _buildMainContent(
                   _pickImageFromGallery(setImage);
                 },
               ),
-              IconButton(
-                icon: Icon(Icons.location_on, color: Colors.white),
-                onPressed: () async {
-                  LatLng? result = await Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => MapPickerScreen()),
-                  );
-
-                  if (result != null) {
-                    selectedLocation = result;
-
-                    print(
-                        'Selected Location: ${result.latitude}, ${result.longitude}');
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('No location selected.'),
-                      ),
-                    );
-                  }
-                },
-              ),
-              IconButton(
-                icon: Icon(Icons.alt_route, color: Colors.white),
-                onPressed: () {
-                  // Focus on the route field
-                  FocusScope.of(context).requestFocus(
-                      FocusNode()); // Add logic to focus route field
-                },
-              ),
+             
             ],
           ),
         ],
@@ -429,287 +400,56 @@ Widget _buildAlternateContent(
     BuildContext context, VoidCallback toggleContent) {
   return Stack(
     children: [
-      StreamBuilder(
-        stream: FirebaseFirestore.instance.collection('post').snapshots(),
-        builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator());
-          }
+      Container(
+       height: MediaQuery.of(context).size.height * 0.73,
+  margin: const EdgeInsets.only(bottom: 20.0), // Set specific margin here
+  child: StreamBuilder(
+    stream: FirebaseFirestore.instance.collection('post').snapshots(),
+    builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
+      if (snapshot.connectionState == ConnectionState.waiting) {
+        return Center(child: CircularProgressIndicator());
+      }
 
-          if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
-          }
+      if (snapshot.hasError) {
+        return Center(child: Text('Error: ${snapshot.error}'));
+      }
 
-          if (snapshot.hasData && snapshot.data!.docs.isNotEmpty) {
-            return Column(
-              children: [
-                Expanded(
-                  child: ListView.builder(
-                    itemCount: snapshot.data!.docs.length,
-                    itemBuilder: (BuildContext context, int index) {
-                      var post = snapshot.data!.docs[index].data()
-                          as Map<String, dynamic>;
-                      var postId =
-                          snapshot.data!.docs[index].id; // Get the post ID
-                      var username = post.containsKey('username')
-                          ? post['username']
-                          : 'Unknown';
-                      var imageUrl = post.containsKey('imageUrl')
-                          ? post['imageUrl']
-                          : null;
-                      var caption = post.containsKey('caption')
-                          ? post['caption']
-                          : 'No Caption';
-                      int likes = post.containsKey('likes') ? post['likes'] : 0;
-                      List<dynamic> likedBy =
-                          post.containsKey('likedBy') ? post['likedBy'] : [];
-                      List<dynamic> comments =
-                          post.containsKey('comments') ? post['comments'] : [];
+      if (snapshot.hasData && snapshot.data!.docs.isNotEmpty) {
+        return Column(
+          children: [
+            Expanded(
+              child: ListView.builder(
+                itemCount: snapshot.data!.docs.length,
+                itemBuilder: (BuildContext context, int index) {
+                  var post = snapshot.data!.docs[index].data() as Map<String, dynamic>;
+                  var postId = snapshot.data!.docs[index].id;
+                  var username = post.containsKey('username') ? post['username'] : 'Unknown';
+                  var imageUrl = post.containsKey('imageUrl') ? post['imageUrl'] : null;
+                  var caption = post.containsKey('caption') ? post['caption'] : 'No Caption';
+                  int likes = post.containsKey('likes') ? post['likes'] : 0;
+                  List<dynamic> likedBy = post.containsKey('likedBy') ? post['likedBy'] : [];
+                  List<dynamic> comments = post.containsKey('comments') ? post['comments'] : [];
 
-                      bool isExpanded = false;
+                  return PostItem(
+                    postId: postId,
+                    username: username,
+                    caption: caption,
+                    likes: likes,
+                    likedBy: likedBy,
+                    comments: comments,
+                    imageUrl: imageUrl,
+                  );
+                },
+              ),
+            ),
+          ],
+        );
+      }
 
-                      return StatefulBuilder(
-                        builder: (BuildContext context, StateSetter setState) {
-                          return Container(
-                            margin: EdgeInsets.symmetric(vertical: 8.0),
-                            padding: EdgeInsets.all(8.0),
-                            decoration: BoxDecoration(
-                              color: Color.fromARGB(255, 80, 96, 116),
-                              borderRadius: BorderRadius.circular(10.0),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                InkWell(
-                                  onTap: () async {
-                                    // Call the function to open the bottom sheet
-                                    GoogleMapController?
-                                        mapController; // You may need to manage this appropriately in your context
-                                    Set<Marker> markers =
-                                        {}; // Replace with actual markers
-                                    Set<Polyline> polylines =
-                                        {}; // Replace with actual polylines
-                                    List<LatLng> routePoints =
-                                        []; // Replace with actual route points
-                                    String userId = post[
-                                        'userId']; // Assuming userId is part of the post data
-
-                                    await displayBottomSheet_otherprofile(
-                                      context,
-                                      mapController,
-                                      markers,
-                                      polylines,
-                                      routePoints,
-                                      userId,
-                                    );
-                                  },
-                                  child: Row(
-                                    children: [
-                                      CircleAvatar(
-                                        backgroundColor: Colors.white,
-                                        radius: 16,
-                                        child: Icon(
-                                          Icons.person,
-                                          color: Colors.grey,
-                                        ), // Placeholder icon for profile picture
-                                      ),
-                                      SizedBox(width: 8),
-                                      Text(
-                                        username,
-                                        style: TextStyle(color: Colors.white),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                SizedBox(height: 8),
-                                isExpanded
-                                    ? Column(
-                                        children: [
-                                          Text(
-                                            caption,
-                                            style:
-                                                TextStyle(color: Colors.white),
-                                          ),
-                                          InkWell(
-                                            onTap: () {
-                                              setState(() {
-                                                isExpanded = false;
-                                              });
-                                            },
-                                            child: Text(
-                                              'Show less',
-                                              style:
-                                                  TextStyle(color: Colors.blue),
-                                            ),
-                                          ),
-                                        ],
-                                      )
-                                    : Column(
-                                        children: [
-                                          Text(
-                                            caption.length > 100
-                                                ? '${caption.substring(0, 100)}...'
-                                                : caption,
-                                            style:
-                                                TextStyle(color: Colors.white),
-                                          ),
-                                          if (caption.length > 100)
-                                            InkWell(
-                                              onTap: () {
-                                                setState(() {
-                                                  isExpanded = true;
-                                                });
-                                              },
-                                              child: Text(
-                                                'Show more',
-                                                style: TextStyle(
-                                                    color: Colors.blue),
-                                              ),
-                                            ),
-                                        ],
-                                      ),
-                                SizedBox(height: 8),
-                                imageUrl != null
-                                    ? Container(
-                                        height: 200,
-                                        color: Colors.grey, // Placeholder color
-                                        child: Image.network(
-                                          imageUrl,
-                                          fit: BoxFit.cover,
-                                          width: double.infinity,
-                                        ),
-                                      )
-                                    : Container(
-                                        height: 200,
-                                        color: Colors.grey, // Placeholder color
-                                        child: Center(
-                                          child: Text(
-                                            'No Image',
-                                            style:
-                                                TextStyle(color: Colors.white),
-                                          ),
-                                        ),
-                                      ),
-                                SizedBox(height: 8),
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceAround,
-                                  children: [
-                                    InkWell(
-                                      onTap: () async {
-                                        // Fetch current user
-                                        User? user =
-                                            FirebaseAuth.instance.currentUser;
-                                        if (user != null) {
-                                          // Check if the user has already liked the post
-                                          if (!likedBy.contains(user.uid)) {
-                                            // Increment likes and add user to likedBy list
-                                            await FirebaseFirestore.instance
-                                                .collection('post')
-                                                .doc(postId)
-                                                .update({
-                                              'likes': FieldValue.increment(1),
-                                              'likedBy': FieldValue.arrayUnion(
-                                                  [user.uid])
-                                            });
-                                          } else {
-                                            // User already liked the post, remove like
-                                            await FirebaseFirestore.instance
-                                                .collection('post')
-                                                .doc(postId)
-                                                .update({
-                                              'likes': FieldValue.increment(-1),
-                                              'likedBy': FieldValue.arrayRemove(
-                                                  [user.uid])
-                                            });
-                                          }
-                                        }
-                                      },
-                                      child: Row(
-                                        children: [
-                                          Icon(Icons.thumb_up,
-                                              color: likedBy.contains(
-                                                      FirebaseAuth.instance
-                                                          .currentUser?.uid)
-                                                  ? Colors.blue
-                                                  : Colors.white),
-                                          SizedBox(width: 4),
-                                          Text(
-                                              '$likes Like${likes == 1 ? '' : 's'}',
-                                              style: TextStyle(
-                                                  color: Colors.white)),
-                                        ],
-                                      ),
-                                    ),
-                                    InkWell(
-                                      onTap: () {
-                                        _showCommentDialog(context, postId);
-                                      },
-                                      child: Row(
-                                        children: [
-                                          Icon(Icons.comment,
-                                              color: Colors.white),
-                                          SizedBox(width: 4),
-                                          Text('Comment',
-                                              style: TextStyle(
-                                                  color: Colors.white)),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                if (comments.isNotEmpty)
-                                  Column(
-                                    children: comments.map<Widget>((comment) {
-                                      return FutureBuilder<DocumentSnapshot>(
-                                        future: FirebaseFirestore.instance
-                                            .collection('users')
-                                            .doc(comment['userId'])
-                                            .get(),
-                                        builder: (context, snapshot) {
-                                          if (snapshot.connectionState ==
-                                              ConnectionState.waiting) {
-                                            return CircularProgressIndicator();
-                                          }
-                                          if (!snapshot.hasData ||
-                                              snapshot.hasError) {
-                                            return Text('Unknown User',
-                                                style: TextStyle(
-                                                    color: Colors.grey));
-                                          }
-                                          var userDoc = snapshot.data!.data()
-                                              as Map<String, dynamic>;
-                                          var commenterUsername =
-                                              userDoc.containsKey('username')
-                                                  ? userDoc['username']
-                                                  : 'Unknown User';
-                                          return ListTile(
-                                            title: Text(commenterUsername,
-                                                style: TextStyle(
-                                                    color: Colors.white)),
-                                            subtitle: Text(comment['text'],
-                                                style: TextStyle(
-                                                    color: Colors.grey)),
-                                          );
-                                        },
-                                      );
-                                    }).toList(),
-                                  ),
-                              ],
-                            ),
-                          );
-                        },
-                      );
-                    },
-                  ),
-                ),
-              ],
-            );
-          }
-
-          return Center(child: Text('No posts found.'));
-        },
-      ),
+      return Center(child: Text('No posts found.'));
+    },
+  ),
+),
       Align(
         alignment: Alignment.bottomCenter,
         child: Container(
@@ -763,48 +503,266 @@ Widget _buildAlternateContent(
   );
 }
 
-void _showCommentDialog(BuildContext context, String postId) {
-  final TextEditingController commentController = TextEditingController();
+class PostItem extends StatefulWidget {
+  final String postId;
+  final String username;
+  final String caption;
+  final int likes;
+  final List<dynamic> likedBy;
+  final List<dynamic> comments;
+  final String? imageUrl;
 
-  showDialog(
-    context: context,
-    builder: (BuildContext context) {
-      return AlertDialog(
-        title: Text('Add a Comment'),
-        content: TextField(
-          controller: commentController,
-          decoration: InputDecoration(hintText: "Enter your comment"),
-        ),
-        actions: <Widget>[
-          TextButton(
-            child: Text('Cancel'),
-            onPressed: () {
-              Navigator.of(context).pop();
+  const PostItem({
+    required this.postId,
+    required this.username,
+    required this.caption,
+    required this.likes,
+    required this.likedBy,
+    required this.comments,
+    this.imageUrl,
+  });
+
+  @override
+  _PostItemState createState() => _PostItemState();
+}
+
+class _PostItemState extends State<PostItem> {
+  bool isExpanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: EdgeInsets.symmetric(vertical: 8.0),
+      padding: EdgeInsets.all(8.0),
+      decoration: BoxDecoration(
+        color: Color.fromARGB(255, 80, 96, 116),
+        borderRadius: BorderRadius.circular(10.0),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          InkWell(
+            onTap: () async {
+              // Call the function to open the bottom sheet
+              GoogleMapController? mapController;
+              Set<Marker> markers = {};
+              Set<Polyline> polylines = {};
+              List<LatLng> routePoints = [];
+              String userId =
+                  widget.username; // Assuming userId is part of the post data
+
+              await displayBottomSheet_otherprofile(
+                context,
+                mapController,
+                markers,
+                polylines,
+                routePoints,
+                userId,
+              );
             },
+            child: Row(
+              children: [
+                CircleAvatar(
+                  backgroundColor: Colors.white,
+                  radius: 16,
+                  child: Icon(
+                    Icons.person,
+                    color: Colors.grey,
+                  ),
+                ),
+                SizedBox(width: 8),
+                Text(
+                  widget.username,
+                  style: TextStyle(color: Colors.white),
+                ),
+              ],
+            ),
           ),
-          TextButton(
-            child: Text('Post'),
-            onPressed: () async {
-              // Get current user
-              User? user = FirebaseAuth.instance.currentUser;
-              if (user != null && commentController.text.isNotEmpty) {
-                // Add comment to the post
-                await FirebaseFirestore.instance
-                    .collection('post')
-                    .doc(postId)
-                    .update({
-                  'comments': FieldValue.arrayUnion([
-                    {'text': commentController.text, 'userId': user.uid}
-                  ])
-                });
-              }
-              Navigator.of(context).pop();
-            },
+          SizedBox(height: 8),
+          isExpanded
+              ? Column(
+                  children: [
+                    Text(
+                      widget.caption,
+                      style: TextStyle(color: Colors.white),
+                    ),
+                    InkWell(
+                      onTap: () {
+                        setState(() {
+                          isExpanded = false;
+                        });
+                      },
+                      child: Text(
+                        'Show less',
+                        style: TextStyle(color: Colors.blue),
+                      ),
+                    ),
+                  ],
+                )
+              : Column(
+                  children: [
+                    Text(
+                      widget.caption.length > 100
+                          ? '${widget.caption.substring(0, 100)}...'
+                          : widget.caption,
+                      style: TextStyle(color: Colors.white),
+                    ),
+                    if (widget.caption.length > 100)
+                      InkWell(
+                        onTap: () {
+                          setState(() {
+                            isExpanded = true;
+                          });
+                        },
+                        child: Text(
+                          'Show more',
+                          style: TextStyle(color: Colors.blue),
+                        ),
+                      ),
+                  ],
+                ),
+          SizedBox(height: 8),
+          widget.imageUrl != null
+              ? Container(
+                  height: 200,
+                  color: Colors.grey,
+                  child: Image.network(
+                    widget.imageUrl!,
+                    fit: BoxFit.cover,
+                    width: double.infinity,
+                  ),
+                )
+              : Container(
+                  height: 200,
+                  color: Colors.grey,
+                  child: Center(
+                    child: Text(
+                      'No Image',
+                      style: TextStyle(color: Colors.white),
+                    ),
+                  ),
+                ),
+          SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              InkWell(
+                onTap: () async {
+                  // Fetch current user
+                  User? user = FirebaseAuth.instance.currentUser;
+                  if (user != null) {
+                    // Check if the user has already liked the post
+                    if (!widget.likedBy.contains(user.uid)) {
+                      // Increment likes and add user to likedBy list
+                      await FirebaseFirestore.instance
+                          .collection('post')
+                          .doc(widget.postId)
+                          .update({
+                        'likes': FieldValue.increment(1),
+                        'likedBy': FieldValue.arrayUnion([user.uid])
+                      });
+                    } else {
+                      // User already liked the post, remove like
+                      await FirebaseFirestore.instance
+                          .collection('post')
+                          .doc(widget.postId)
+                          .update({
+                        'likes': FieldValue.increment(-1),
+                        'likedBy': FieldValue.arrayRemove([user.uid])
+                      });
+                    }
+                  }
+                },
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.thumb_up,
+                      color: widget.likedBy
+                              .contains(FirebaseAuth.instance.currentUser?.uid)
+                          ? Colors.blue
+                          : Colors.white,
+                    ),
+                    SizedBox(width: 4),
+                    Text(
+                      '${widget.likes} Like${widget.likes == 1 ? '' : 's'}',
+                      style: TextStyle(color: Colors.white),
+                    ),
+                  ],
+                ),
+              ),
+              InkWell(
+                onTap: () {
+                  _showCommentDialog(context, widget.postId);
+                },
+                child: Row(
+                  children: [
+                    Icon(Icons.comment, color: Colors.white),
+                    SizedBox(width: 4),
+                    Text('Comment', style: TextStyle(color: Colors.white)),
+                  ],
+                ),
+              ),
+            ],
           ),
+          if (widget.comments.isNotEmpty)
+            Column(
+              children: widget.comments.map<Widget>((comment) {
+                return ListTile(
+                  title: Text(comment['username']),
+                  subtitle: Text(comment['text']),
+                );
+              }).toList(),
+            ),
         ],
-      );
-    },
-  );
+      ),
+    );
+  }
+
+  void _showCommentDialog(BuildContext context, String postId) {
+    TextEditingController _commentController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Add a Comment'),
+          content: TextField(
+            controller: _commentController,
+            decoration: InputDecoration(hintText: 'Write your comment...'),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () async {
+                if (_commentController.text.isNotEmpty) {
+                  await FirebaseFirestore.instance
+                      .collection('post')
+                      .doc(postId)
+                      .update({
+                    'comments': FieldValue.arrayUnion([
+                      {
+                        'username':
+                            FirebaseAuth.instance.currentUser?.displayName ??
+                                'Unknown',
+                        'text': _commentController.text,
+                      }
+                    ])
+                  });
+                  Navigator.of(context).pop();
+                }
+              },
+              child: Text('Post Comment'),
+            ),
+          ],
+        );
+      },
+    );
+  }
 }
 
 void _pickImageFromGallery(Function(File?) setImage) async {

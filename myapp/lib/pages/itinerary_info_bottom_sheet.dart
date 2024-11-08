@@ -46,74 +46,79 @@ class ItineraryInfoBottomSheetState extends State<ItineraryInfoBottomSheet> {
     });
   }
 
- @override
-Widget build(BuildContext context) {
-  return Container(
-    padding: EdgeInsets.all(16.0),
-    height: 250,
-    width: MediaQuery.of(context).size.width,
-    decoration: BoxDecoration(
-      color: const Color.fromARGB(255, 22, 23, 43),
-      borderRadius: BorderRadius.circular(20), // Make all corners circular
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black26,
-          blurRadius: 10,
-          offset: Offset(0, -2),
-        ),
-      ],
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Route Information',
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            color: Colors.white, // Set font color to white
+@override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.all(16.0),
+      height: 350,
+      width: MediaQuery.of(context).size.width,
+      decoration: BoxDecoration(
+        color: const Color.fromARGB(255, 22, 23, 43),
+        borderRadius: BorderRadius.circular(20), // Make all corners circular
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black26,
+            blurRadius: 10,
+            offset: Offset(0, -2),
           ),
-        ),
-        SizedBox(height: 20),
-        Text(
-          'Destination: $destination',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: Colors.white, // Set font color to white
-          ),
-        ),
-        SizedBox(height: 10),
-        Text(
-          'Estimated Time: $estimatedTime',
-          style: TextStyle(
-            fontSize: 16,
-            color: Colors.white, // Set font color to white
-          ),
-        ),
-        Text(
-          'Distance Remaining: $distance km',
-          style: TextStyle(
-            fontSize: 16,
-            color: Colors.white, // Set font color to white
-          ),
-        ),
-        Spacer(),
-        ElevatedButton(
-          onPressed: () {
-            widget.routeService.cancelRoute();
-            widget.onClose();
-          },
-          child: Text('Close'),
-          style: ElevatedButton.styleFrom(
-            padding: EdgeInsets.symmetric(vertical: 12.0, horizontal: 30.0),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Route Information',
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: Colors.white, // Set font color to white
             ),
           ),
-        ),
-      ],
-    ),
-  );
-}
+          SizedBox(height: 20),
+          Text(
+            'Destination: $destination',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: Colors.white, // Set font color to white
+            ),
+          ),
+          SizedBox(height: 10),
+          Text(
+            'Estimated Time: $estimatedTime',
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.white, // Set font color to white
+            ),
+          ),
+          Text(
+            'Distance Remaining: $distance km',
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.white, // Set font color to white
+            ),
+          ),
+          Spacer(),
+          ElevatedButton(
+            onPressed: () {
+              // Cancel the route
+              widget.routeService.cancelRoute();
+
+              // Close the window and cancel route
+              // Close the bottom sheet
+              widget
+                  .onClose(); // Perform any additional actions when closing (optional)
+            },
+            child: Text('Cancel Route'), // Change text to 'Cancel Route'
+            style: ElevatedButton.styleFrom(
+              padding: EdgeInsets.symmetric(vertical: 12.0, horizontal: 30.0),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }

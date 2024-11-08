@@ -138,73 +138,43 @@ Future<void> displayBottomSheet_otherprofile(
                             !showEditListContent &&
                             !showSettingsContent) ...[
                           Row(
-                            mainAxisAlignment: MainAxisAlignment.start,
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              Container(
-                                width: 80,
-                                height: 80,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: Colors.white,
-                                ),
-                                child: Center(
-                                  child: Icon(
-                                    Icons.person,
-                                    size: 40,
-                                    color: Color.fromARGB(225, 41, 42, 60),
-                                  ),
-                                ),
-                              ),
-                              SizedBox(width: 16.0),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    username, // Display fetched username here
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 20,
-                                    ),
-                                  ),
-                                  SizedBox(height: 4.0),
-                                  Row(
-                                    children: [
-                                      Text(
-                                        '0 followers | 5 following',
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 14,
-                                        ),
-                                      ),
-                                      SizedBox(
-                                          width:
-                                              16.0), // Add some space between
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
+  mainAxisAlignment: MainAxisAlignment.start,
+  crossAxisAlignment: CrossAxisAlignment.center, // Center items vertically
+  children: [
+    Container(
+      width: 80,
+      height: 80,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: Colors.white,
+      ),
+      child: Center(
+        child: Icon(
+          Icons.person,
+          size: 40,
+          color: Color.fromARGB(225, 41, 42, 60),
+        ),
+      ),
+    ),
+    SizedBox(width: 16.0),
+    Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisAlignment: MainAxisAlignment.center, // Center text vertically in the row
+      children: [
+        Text(
+          username, // Display fetched username here
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 20,
+          ),
+        ),
+        SizedBox(height: 4.0),
+      ],
+    ),
+  ],
+),
                           SizedBox(height: 16.0),
-                          Center(
-                            child: ElevatedButton(
-                              onPressed: () {},
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor:
-                                    Color.fromARGB(225, 41, 42, 60),
-                                side: BorderSide(
-                                    color: Color.fromARGB(
-                                        255, 136, 147, 206)), // Outline color
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: 24.0,
-                                  vertical: 12.0,
-                                ), // Adjust padding for smaller size
-                              ),
-                              child: Text('Edit Profile',
-                                  style: TextStyle(color: Colors.white)),
-                            ),
-                          ),
+                          
                           SizedBox(height: 16.0),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -1181,43 +1151,118 @@ Widget _buildLibraryContent(
                                 );
 
                                 // Create the bottom sheet state variable
+                                OverlayEntry? _bottomSheetOverlayEntry;
                                 ItineraryInfoBottomSheetState? bottomSheetState;
+                                String estimatedTime = 'Calculating...';
+                                String distance = 'Calculating...';
+                                String locationName = '';
 
-                                // Show the bottom sheet
-                                showModalBottomSheet(
-                                  backgroundColor: Colors.transparent,
-                                  barrierColor: Colors.transparent,
-                                  context: context,
-                                  builder: (context) {
-                                    return ItineraryInfoBottomSheet(
-                                      estimatedTime: 'Calculating...',
-                                      distance: 'Calculating...',
-                                      destination: '',
-                                      routeService:
-                                          routeService, // Initial empty destination
-                                      onStateCreated: (state) {
-                                        bottomSheetState =
-                                            state; // Store the state for future updates
-                                      },
-                                      onClose: () {
-                                        // Handle close action if needed
-                                      },
-                                    );
+                                Offset overlayPosition = Offset(30, 30);
+                                bool isMinimized = false;
+
+                                void _showOverlay(BuildContext context) {
+                                  _bottomSheetOverlayEntry = OverlayEntry(
+                                    builder: (context) {
+                                      return Positioned(
+                                        left: overlayPosition.dx,
+                                        top: overlayPosition.dy,
+                                        child: Draggable(
+                                          feedback:
+                                              Container(), // No feedback when dragging
+                                          onDragUpdate: (details) {
+                                            // Increment overlay position based on drag delta
+                                            overlayPosition += details.delta;
+                                            _bottomSheetOverlayEntry!
+                                                .markNeedsBuild();
+                                          },
+                                          child: SizedBox(
+                                            width: isMinimized ? 70 : 300,
+                                            height: isMinimized ? 70 : 400,
+                                            child: Material(
+                                              color: Colors.transparent,
+                                              child: Column(
+                                                children: [
+                                                  Row(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment.end,
+                                                    children: [
+                                                      Container(
+                                                        decoration:
+                                                            BoxDecoration(
+                                                          color: Colors.black
+                                                              .withOpacity(0.7),
+                                                          shape:
+                                                              BoxShape.circle,
+                                                        ),
+                                                        child: IconButton(
+                                                          icon: Icon(
+                                                            isMinimized
+                                                                ? Icons.explore
+                                                                : Icons
+                                                                    .minimize,
+                                                            color: Colors.white,
+                                                          ),
+                                                          onPressed: () {
+                                                            isMinimized =
+                                                                !isMinimized;
+                                                            _bottomSheetOverlayEntry!
+                                                                .markNeedsBuild();
+                                                          },
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                  if (!isMinimized)
+                                                    ItineraryInfoBottomSheet(
+                                                      estimatedTime:
+                                                          estimatedTime,
+                                                      distance: distance,
+                                                      destination: locationName,
+                                                      routeService:
+                                                          routeService,
+                                                      onStateCreated: (state) {
+                                                        bottomSheetState =
+                                                            state;
+                                                      },
+                                                      onClose: () {
+                                                        routeService
+                                                            .cancelRoute();
+                                                        _bottomSheetOverlayEntry
+                                                            ?.remove();
+                                                      },
+                                                    ),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  );
+
+                                  Overlay.of(context)
+                                      .insert(_bottomSheetOverlayEntry!);
+                                }
+
+                                _showOverlay(context);
+
+                                await routeService.routeThroughLocations(
+                                  locations,
+                                  (calculatedTime, calculatedDistance,
+                                      calculatedLocationName) {
+                                    estimatedTime = calculatedTime;
+                                    distance = calculatedDistance;
+                                    locationName = calculatedLocationName;
+
+                                    if (bottomSheetState != null) {
+                                      bottomSheetState!.updateRouteInfo(
+                                        estimatedTime,
+                                        distance,
+                                        locationName,
+                                      );
+                                    }
                                   },
                                 );
-
-                                // Start routing through the retrieved locations with a callback
-                                await routeService.routeThroughLocations(
-                                    locations,
-                                    (estimatedTime, distance, locationName) {
-                                  // Once the route is started, update the itinerary info bottom sheet
-                                  if (bottomSheetState != null) {
-                                    bottomSheetState!.updateRouteInfo(
-                                        estimatedTime, distance, locationName);
-                                  }
-                                });
-
-                                // Show the bottom sheet after starting the route
                               } else {
                                 print('No locations to route.');
                               }
