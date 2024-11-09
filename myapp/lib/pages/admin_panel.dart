@@ -450,7 +450,7 @@ class _AdminPanelState extends State<AdminPanel> {
                     ),
                   ),
                   Container(
-                    height: 600, // Set a fixed height to show 6 items
+                    height: 500, // Set a fixed height to show 6 items
                     child: StreamBuilder<QuerySnapshot>(
                       stream: FirebaseFirestore.instance
                           .collection('list')
@@ -487,10 +487,8 @@ class _AdminPanelState extends State<AdminPanel> {
                                 margin:
                                     const EdgeInsets.symmetric(vertical: 8.0),
                                 child: Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
+                                  mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    Icon(Icons.copy, color: Colors.white),
                                     Text(
                                       data['name'] != null &&
                                               data['name'].length > 30
@@ -503,16 +501,7 @@ class _AdminPanelState extends State<AdminPanel> {
                                       maxLines:
                                           1, // Ensure the text stays on one line
                                       overflow: TextOverflow
-                                          .ellipsis, // Add ellipsis if the text exceeds available space
-                                    ),
-                                    IconButton(
-                                      icon: Icon(Icons.more_vert,
-                                          color: Colors.white),
-                                      onPressed: () {
-                                        setState(() {
-                                          // Define toggleListSampleContent logic if needed
-                                        });
-                                      },
+                                          .ellipsis, // Add ellipsis if text exceeds available space
                                     ),
                                   ],
                                 ),
@@ -523,7 +512,7 @@ class _AdminPanelState extends State<AdminPanel> {
                       },
                     ),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 1),
                   TextButton(
                     onPressed: () {
                       setState(() {
@@ -1223,36 +1212,9 @@ class _AdminPanelState extends State<AdminPanel> {
                                   if (comments.isNotEmpty)
                                     Column(
                                       children: comments.map<Widget>((comment) {
-                                        return FutureBuilder<DocumentSnapshot>(
-                                          future: FirebaseFirestore.instance
-                                              .collection('users')
-                                              .doc(comment['userId'])
-                                              .get(),
-                                          builder: (context, snapshot) {
-                                            if (snapshot.connectionState ==
-                                                ConnectionState.waiting) {
-                                              return CircularProgressIndicator();
-                                            }
-                                            if (!snapshot.hasData ||
-                                                snapshot.hasError) {
-                                              return Text('Unknown User',
-                                                  style: TextStyle(
-                                                      color: Colors.grey));
-                                            }
-                                            var userDoc = snapshot.data!.data()
-                                                as Map<String, dynamic>;
-                                            var commenterUsername =
-                                                userDoc['username'] ??
-                                                    'Unknown User';
-                                            return ListTile(
-                                              title: Text(commenterUsername,
-                                                  style: TextStyle(
-                                                      color: Colors.white)),
-                                              subtitle: Text(comment['text'],
-                                                  style: TextStyle(
-                                                      color: Colors.grey)),
-                                            );
-                                          },
+                                        return ListTile(
+                                          title: Text(comment['username']),
+                                          subtitle: Text(comment['text']),
                                         );
                                       }).toList(),
                                     ),
