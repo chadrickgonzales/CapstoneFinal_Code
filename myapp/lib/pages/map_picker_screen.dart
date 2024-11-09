@@ -157,6 +157,9 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
                             hintStyle: TextStyle(color: Colors.white),
                             border: OutlineInputBorder(),
                           ),
+                          style: TextStyle(
+                              color: Colors
+                                  .white), // Set the text input color to white
                           onChanged: (value) {
                             _searchLocation(value);
                           },
