@@ -71,7 +71,7 @@ class RouteInfoBottomSheetState extends State<RouteInfoBottomSheet> {
               Text(
                 'Route Information',
                 style: TextStyle(
-                  fontSize: 24, // Updated font size
+                  fontSize: 20, // Updated font size
                   fontWeight: FontWeight.bold,
                   color: Colors.white, // Updated font color to white
                 ),

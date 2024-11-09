@@ -81,9 +81,7 @@ class _SignInWithEmailState extends State<SignInWithEmail> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Sign in with Email'),
-      ),
+     
       backgroundColor: const Color.fromARGB(225, 80, 96, 116),
       body: Padding(
         padding: const EdgeInsets.all(16.0),

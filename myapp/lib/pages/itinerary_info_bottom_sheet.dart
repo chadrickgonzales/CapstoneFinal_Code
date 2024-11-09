@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:myapp/pages/google_map_page.dart';
 import 'package:myapp/services/routeservice.dart';
 
 class ItineraryInfoBottomSheet extends StatefulWidget {
@@ -50,7 +51,7 @@ class ItineraryInfoBottomSheetState extends State<ItineraryInfoBottomSheet> {
   Widget build(BuildContext context) {
     return Container(
       padding: EdgeInsets.all(16.0),
-      height: 350,
+      height: 250,
       width: MediaQuery.of(context).size.width,
       decoration: BoxDecoration(
         color: const Color.fromARGB(255, 22, 23, 43),
@@ -69,7 +70,7 @@ class ItineraryInfoBottomSheetState extends State<ItineraryInfoBottomSheet> {
           Text(
             'Route Information',
             style: TextStyle(
-              fontSize: 24,
+              fontSize: 20,
               fontWeight: FontWeight.bold,
               color: Colors.white, // Set font color to white
             ),
@@ -78,7 +79,7 @@ class ItineraryInfoBottomSheetState extends State<ItineraryInfoBottomSheet> {
           Text(
             'Destination: $destination',
             style: TextStyle(
-              fontSize: 16,
+              fontSize: 12,
               fontWeight: FontWeight.w600,
               color: Colors.white, // Set font color to white
             ),
@@ -87,36 +88,44 @@ class ItineraryInfoBottomSheetState extends State<ItineraryInfoBottomSheet> {
           Text(
             'Estimated Time: $estimatedTime',
             style: TextStyle(
-              fontSize: 16,
+              fontSize: 12,
               color: Colors.white, // Set font color to white
             ),
           ),
           Text(
             'Distance Remaining: $distance km',
             style: TextStyle(
-              fontSize: 16,
+              fontSize: 12,
               color: Colors.white, // Set font color to white
             ),
           ),
           Spacer(),
           ElevatedButton(
-            onPressed: () {
-              // Cancel the route
-              widget.routeService.cancelRoute();
+  onPressed: () {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (BuildContext context) => MapSample(), // Rebuild the app
+      ),
+    );
+    // Cancel the route
+    widget.routeService.cancelRoute();
 
-              // Close the window and cancel route
-              // Close the bottom sheet
-              widget
-                  .onClose(); // Perform any additional actions when closing (optional)
-            },
-            child: Text('Cancel Route'), // Change text to 'Cancel Route'
-            style: ElevatedButton.styleFrom(
-              padding: EdgeInsets.symmetric(vertical: 12.0, horizontal: 30.0),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
-          ),
+    // Close the window and cancel route
+    // Close the bottom sheet
+    widget.onClose(); // Perform any additional actions when closing (optional)
+  },
+  child: Text(
+    'Cancel Route',
+    style: TextStyle(fontSize: 14), // Adjust font size to make text smaller
+  ),
+  style: ElevatedButton.styleFrom(
+    padding: EdgeInsets.symmetric(vertical: 8.0, horizontal: 20.0), // Reduce padding
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(10),
+    ),
+  ),
+),
         ],
       ),
     );

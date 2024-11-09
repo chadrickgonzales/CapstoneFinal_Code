@@ -497,8 +497,9 @@ Future<String> _calculateETA(double distance) async {
       print("Location request has been cancelled after receiving location data.");
       return null;
     }
-
+ print("Current location: Latitude: ${locationData.latitude}, Longitude: ${locationData.longitude}");
     return LatLng(locationData.latitude!, locationData.longitude!);
+    
   } catch (e) {
     print("Error getting current location: $e");
     return null;
@@ -874,7 +875,7 @@ Future<bool> waitForArrival(LatLng destination) async { // Time in seconds to wa
 
 // Helper function to calculate the distance between two LatLng points
 double _calculateDistance1(LatLng start, LatLng end) {
-  const double earthRadius = 6371; // Earth's radius in kilometers
+  const double earthRadius = 6371000; // Earth's radius in meters
 
   double dLat = _degreesToRadians(end.latitude - start.latitude);
   double dLng = _degreesToRadians(end.longitude - start.longitude);
@@ -884,8 +885,7 @@ double _calculateDistance1(LatLng start, LatLng end) {
       sin(dLng / 2) * sin(dLng / 2);
   double c = 2 * atan2(sqrt(a), sqrt(1 - a));
 
-  double distanceInKm = earthRadius * c;
-  return double.parse(distanceInKm.toStringAsFixed(2)); // Distance in kilometers, rounded to 2 decimal places
+  return earthRadius * c; // Distance in meters
 }
 
 // Helper function to convert degrees to radians

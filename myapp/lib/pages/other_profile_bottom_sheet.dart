@@ -1006,8 +1006,13 @@ Widget _buildLibraryContent(
                   return Center(child: CircularProgressIndicator());
                 }
                 if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                  return Center(child: Text('No lists found'));
-                }
+    return Center(
+        child: Text(
+            'No lists found',
+            style: TextStyle(color: Colors.white),
+        ),
+    );
+}
 
                 final documents = snapshot.data!.docs;
 
@@ -3597,22 +3602,7 @@ Widget _buildSettingsContent(BuildContext context, VoidCallback toggleContent) {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Row(
-              children: [
-                Icon(
-                  Icons.lock,
-                  size: 32,
-                  color: Colors.white, // Icon color
-                ),
-                SizedBox(width: 32.0), // Spacing between icon and text
-                Text(
-                  'General',
-                  style: TextStyle(
-                    fontSize: 32.0,
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
+              
             ),
             Switch(
               value: false, // Default switch state
@@ -3632,22 +3622,7 @@ Widget _buildSettingsContent(BuildContext context, VoidCallback toggleContent) {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Row(
-              children: [
-                Icon(
-                  Icons.add_circle_outline,
-                  size: 32,
-                  color: Colors.white, // Icon color
-                ),
-                SizedBox(width: 32.0), // Spacing between icon and text
-                Text(
-                  'Account',
-                  style: TextStyle(
-                    fontSize: 32.0,
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
+              
             ),
             GestureDetector(
               onTap: () {

@@ -1053,8 +1053,13 @@ Widget _buildLibraryContent(
                   }
 
                   if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                    return Center(child: Text('No lists found'));
-                  }
+    return Center(
+        child: Text(
+            'No lists found',
+            style: TextStyle(color: Colors.white),
+        ),
+    );
+}
 
                   final documents = snapshot.data!.docs;
 
@@ -1311,114 +1316,112 @@ Widget _buildLibraryContent(
                 ],
               ),
               // Fetch and display the list content from Firestore
-              StreamBuilder<QuerySnapshot>(
-                stream:
-                    FirebaseFirestore.instance.collection('list').snapshots(),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return Center(child: CircularProgressIndicator());
-                  }
-                  if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                    return Center(child: Text('No lists found'));
-                  }
+             
+            StreamBuilder<QuerySnapshot>(
+  stream: FirebaseFirestore.instance
+      .collection('list')
+      .where('userId',   isEqualTo: FirebaseAuth.instance.currentUser?.uid) // Filter by userId
+      .snapshots(),
+  builder: (context, snapshot) {
+    if (snapshot.connectionState == ConnectionState.waiting) {
+      return Center(child: CircularProgressIndicator());
+    }
+    if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+      return Center(
+        child: Text(
+          'No lists found',
+          style: TextStyle(color: Colors.white),
+        ),
+      );
+    }
 
-                  final documents = snapshot.data!.docs;
+    final documents = snapshot.data!.docs;
 
-                  return Column(
-                    children: documents.map((doc) {
-                      final data = doc.data() as Map<String, dynamic>;
-                      final String listId = doc.id; // Get the list ID
+    return Column(
+      children: documents.map((doc) {
+        final data = doc.data() as Map<String, dynamic>;
+        final String listId = doc.id; // Get the list ID
 
-                      return GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            isListContentClicked = true;
-                            clickedListContent = data['name'] ?? 'Unknown';
-                            selectedListId =
-                                listId; // Store the selected list ID
-                          });
-                        },
-                        child: Container(
-                          color: Colors.transparent,
-                          padding: const EdgeInsets.all(16.0),
-                          margin: const EdgeInsets.symmetric(vertical: 8.0),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Icon(Icons.copy, color: Colors.white),
-                              Text(
-                                data['name'] != null && data['name'].length > 30
-                                    ? '${data['name'].substring(0, 30)}...' // Limit to 30 characters and add ellipsis
-                                    : data['name'] ?? 'Unnamed List',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 16,
-                                ),
-                                maxLines:
-                                    1, // Ensure the text stays on one line
-                                overflow: TextOverflow
-                                    .ellipsis, // Add ellipsis if the text exceeds available space
-                              ),
-                              PopupMenuButton<String>(
-                                icon:
-                                    Icon(Icons.more_vert, color: Colors.white),
-                                itemBuilder: (BuildContext context) {
-                                  return [
-                                    PopupMenuItem<String>(
-                                      value: 'delete',
-                                      child: Text('Delete List'),
-                                    ),
-                                  ];
-                                },
-                                onSelected: (String value) {
-                                  if (value == 'delete') {
-                                    showDialog(
-                                      context: context,
-                                      builder: (context) => AlertDialog(
-                                        title: Text('Confirm Deletion'),
-                                        content: Text(
-                                            'Are you sure you want to delete this list?'),
-                                        actions: [
-                                          TextButton(
-                                            onPressed: () {
-                                              FirebaseFirestore.instance
-                                                  .collection(
-                                                      'list') // Adjust to your collection name
-                                                  .doc(doc
-                                                      .id) // Use the doc ID to delete the specific document
-                                                  .delete()
-                                                  .then((_) {
-                                                Navigator.of(context)
-                                                    .pop(); // Close dialog
-                                              }).catchError((error) {
-                                                print(
-                                                    'Failed to delete list: $error');
-                                              });
-                                            },
-                                            child: Text('Yes'),
-                                          ),
-                                          TextButton(
-                                            onPressed: () {
-                                              Navigator.of(context).pop();
-                                              Navigator.of(context)
-                                                  .pop(); // Close dialog
-                                            },
-                                            child: Text('No'),
-                                          ),
-                                        ],
-                                      ),
-                                    );
-                                  }
-                                },
-                              ),
-                            ],
-                          ),
+        return GestureDetector(
+          onTap: () {
+            setState(() {
+              isListContentClicked = true;
+              clickedListContent = data['name'] ?? 'Unknown';
+              selectedListId = listId; // Store the selected list ID
+            });
+          },
+          child: Container(
+            color: Colors.transparent,
+            padding: const EdgeInsets.all(16.0),
+            margin: const EdgeInsets.symmetric(vertical: 8.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Icon(Icons.copy, color: Colors.white),
+                Text(
+                  data['name'] != null && data['name'].length > 30
+                      ? '${data['name'].substring(0, 30)}...' // Limit to 30 characters and add ellipsis
+                      : data['name'] ?? 'Unnamed List',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                  ),
+                  maxLines: 1, // Ensure the text stays on one line
+                  overflow: TextOverflow.ellipsis, // Add ellipsis if the text exceeds available space
+                ),
+                PopupMenuButton<String>(
+                  icon: Icon(Icons.more_vert, color: Colors.white),
+                  itemBuilder: (BuildContext context) {
+                    return [
+                      PopupMenuItem<String>(
+                        value: 'delete',
+                        child: Text('Delete List'),
+                      ),
+                    ];
+                  },
+                  onSelected: (String value) {
+                    if (value == 'delete') {
+                      showDialog(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          title: Text('Confirm Deletion'),
+                          content: Text(
+                              'Are you sure you want to delete this list?'),
+                          actions: [
+                            TextButton(
+                              onPressed: () {
+                                FirebaseFirestore.instance
+                                    .collection('list')
+                                    .doc(doc.id) // Use the doc ID to delete the specific document
+                                    .delete()
+                                    .then((_) {
+                                  Navigator.of(context).pop(); // Close dialog
+                                }).catchError((error) {
+                                  print('Failed to delete list: $error');
+                                });
+                              },
+                              child: Text('Yes'),
+                            ),
+                            TextButton(
+                              onPressed: () {
+                                Navigator.of(context).pop();
+                              },
+                              child: Text('No'),
+                            ),
+                          ],
                         ),
                       );
-                    }).toList(),
-                  );
-                },
-              ),
+                    }
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  },
+),
             ],
           ] else if (isListContentClicked) ...[
             SingleChildScrollView(
@@ -1513,7 +1516,7 @@ Widget _buildLibraryContent(
                                           },
                                           child: SizedBox(
                                             width: isMinimized ? 70 : 300,
-                                            height: isMinimized ? 70 : 400,
+                                            height: isMinimized ? 70 : 300,
                                             child: Material(
                                               color: Colors.transparent,
                                               child: Column(

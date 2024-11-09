@@ -137,39 +137,35 @@ class _SavedBottomSheetState extends State<SavedBottomSheet> {
                     onBack: _hidePlaceDetails,
                   )
                 : FutureBuilder<List<Map<String, dynamic>>>(
-                    future: _fetchSavedPlacesWithDetails(),
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return Center(child: CircularProgressIndicator());
-                      }
-                      if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                        return Center(
-                          child: Text(
-                            'No saved places yet.',
-                            style: TextStyle(color: Colors.white),
-                          ),
-                        );
-                      }
-                      return ListView.builder(
-                        itemCount: snapshot.data!.length,
-                        itemBuilder: (context, index) {
-                          final savedPlace = snapshot.data![index];
-                          final placeDetails = savedPlace['placeDetails'];
-                          final placeName =
-                              placeDetails['name'] ?? 'Unknown Place';
-                          final address = placeDetails['formatted_address'] ??
-                              'Unknown Address';
-                          final photoReference =
-                              placeDetails['photos']?[0]['photo_reference'];
-                          final imageUrl = savedPlace[
-                              'imageUrl']; // Use imageUrl from savedPlace // Handle photos
-                          final docId = savedPlace['docId'];
-                          return _buildSavedPlaceContainer(placeName, address,
-                              photoReference, imageUrl, placeDetails, docId);
-                        },
-                      );
-                    },
-                  ),
+  future: _fetchSavedPlacesWithDetails(),
+  builder: (context, snapshot) {
+    if (snapshot.connectionState == ConnectionState.waiting) {
+      return Center(child: CircularProgressIndicator());
+    }
+    if (!snapshot.hasData || snapshot.data!.isEmpty) {
+      return Center(
+        child: Text(
+          'No saved places yet.',
+          style: TextStyle(color: Colors.white),
+        ),
+      );
+    }
+    return ListView.builder(
+      itemCount: snapshot.data!.length,
+      itemBuilder: (context, index) {
+        final savedPlace = snapshot.data![index];
+        final placeDetails = savedPlace['placeDetails'];
+        final placeName = placeDetails['name'] ?? 'Unknown Place';
+        final address = placeDetails['formatted_address'] ?? 'Unknown Address';
+        final photoReference = placeDetails['photos']?[0]['photo_reference'];
+        final imageUrl = savedPlace['imageUrl'];
+        final docId = savedPlace['docId'];
+        return _buildSavedPlaceContainer(
+            placeName, address, photoReference, imageUrl, placeDetails, docId);
+      },
+    );
+  },
+),
           ),
         ],
       ),
