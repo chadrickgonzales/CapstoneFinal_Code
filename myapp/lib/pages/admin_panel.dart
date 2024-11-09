@@ -375,6 +375,22 @@ class _AdminPanelState extends State<AdminPanel> {
             TextButton(
               onPressed: () {
                 setState(() {
+                  selectedSection =
+                      'Deleted Posts'; // Navigate to Deleted Posts
+                });
+              },
+              child: const Text(
+                'Deleted Posts',
+                style: TextStyle(
+                    fontSize: 24,
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold), // Bigger text
+              ),
+            ),
+            const SizedBox(height: 20),
+            TextButton(
+              onPressed: () {
+                setState(() {
                   selectedSection = 'Itineraries';
                 });
               },
@@ -390,7 +406,7 @@ class _AdminPanelState extends State<AdminPanel> {
             TextButton(
               onPressed: () {
                 setState(() {
-                  selectedSection = '';
+                  selectedSection = ''; // Go Back
                 });
               },
               child: const Text(
@@ -431,6 +447,41 @@ class _AdminPanelState extends State<AdminPanel> {
                     fontSize: 24,
                     color: Colors.white,
                     fontWeight: FontWeight.bold),
+              ),
+            ),
+          ] else if (selectedSection == 'Deleted Posts') ...[
+            const Text(
+              'Deleted Posts',
+              style: TextStyle(
+                fontSize: 24,
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 20),
+            Expanded(
+              child: _buildDeletedPostsContent(context, () {
+                setState(() {
+                  selectedSection =
+                      'Content Management'; // Return to content management
+                });
+              }),
+            ),
+            const SizedBox(height: 20),
+            TextButton(
+              onPressed: () {
+                setState(() {
+                  selectedSection =
+                      'Content Management'; // Go back to content management
+                });
+              },
+              child: const Text(
+                'Go Back',
+                style: TextStyle(
+                  fontSize: 24,
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
           ] else if (selectedSection == 'Itineraries') ...[
@@ -967,7 +1018,11 @@ class _AdminPanelState extends State<AdminPanel> {
     return Stack(
       children: [
         StreamBuilder(
-          stream: FirebaseFirestore.instance.collection('post').snapshots(),
+          stream: FirebaseFirestore.instance
+              .collection('post')
+              .where('isDeleted',
+                  isEqualTo: false) // Only get posts that are not deleted
+              .snapshots(),
           builder:
               (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
@@ -989,7 +1044,7 @@ class _AdminPanelState extends State<AdminPanel> {
                             as Map<String, dynamic>;
                         var postId = snapshot.data!.docs[index].id;
                         var username = post['username'] ?? 'Unknown';
-                        var imageUrl = post['imageUrl'] ?? null;
+                        var imageUrl = post['imageUrl'];
                         var caption = post['caption'] ?? 'No Caption';
                         int likes = post['likes'] ?? 0;
                         List<dynamic> likedBy = post['likedBy'] ?? [];
@@ -1011,25 +1066,21 @@ class _AdminPanelState extends State<AdminPanel> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Row(
-                                    mainAxisAlignment: MainAxisAlignment
-                                        .spaceBetween, // Aligns items to left and right
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
                                     children: [
                                       Row(
                                         children: [
                                           CircleAvatar(
                                             backgroundColor: Colors.white,
                                             radius: 16,
-                                            child: Icon(
-                                              Icons.person,
-                                              color: Colors.grey,
-                                            ),
+                                            child: Icon(Icons.person,
+                                                color: Colors.grey),
                                           ),
                                           SizedBox(width: 8),
-                                          Text(
-                                            username,
-                                            style:
-                                                TextStyle(color: Colors.white),
-                                          ),
+                                          Text(username,
+                                              style: TextStyle(
+                                                  color: Colors.white)),
                                         ],
                                       ),
                                       IconButton(
@@ -1054,12 +1105,13 @@ class _AdminPanelState extends State<AdminPanel> {
                                                   TextButton(
                                                     child: Text('Yes'),
                                                     onPressed: () async {
-                                                      // Perform delete operation
                                                       await FirebaseFirestore
                                                           .instance
                                                           .collection('post')
                                                           .doc(postId)
-                                                          .delete();
+                                                          .update({
+                                                        'isDeleted': true
+                                                      });
                                                       Navigator.of(context)
                                                           .pop();
                                                     },
@@ -1076,22 +1128,18 @@ class _AdminPanelState extends State<AdminPanel> {
                                   isExpanded
                                       ? Column(
                                           children: [
-                                            Text(
-                                              caption,
-                                              style: TextStyle(
-                                                  color: Colors.white),
-                                            ),
+                                            Text(caption,
+                                                style: TextStyle(
+                                                    color: Colors.white)),
                                             InkWell(
                                               onTap: () {
                                                 setState(() {
                                                   isExpanded = false;
                                                 });
                                               },
-                                              child: Text(
-                                                'Show less',
-                                                style: TextStyle(
-                                                    color: Colors.blue),
-                                              ),
+                                              child: Text('Show less',
+                                                  style: TextStyle(
+                                                      color: Colors.blue)),
                                             ),
                                           ],
                                         )
@@ -1111,11 +1159,9 @@ class _AdminPanelState extends State<AdminPanel> {
                                                     isExpanded = true;
                                                   });
                                                 },
-                                                child: Text(
-                                                  'Show more',
-                                                  style: TextStyle(
-                                                      color: Colors.blue),
-                                                ),
+                                                child: Text('Show more',
+                                                    style: TextStyle(
+                                                        color: Colors.blue)),
                                               ),
                                           ],
                                         ),
@@ -1134,11 +1180,9 @@ class _AdminPanelState extends State<AdminPanel> {
                                           height: 200,
                                           color: Colors.grey,
                                           child: Center(
-                                            child: Text(
-                                              'No Image',
-                                              style: TextStyle(
-                                                  color: Colors.white),
-                                            ),
+                                            child: Text('No Image',
+                                                style: TextStyle(
+                                                    color: Colors.white)),
                                           ),
                                         ),
                                   SizedBox(height: 8),
@@ -1236,72 +1280,332 @@ class _AdminPanelState extends State<AdminPanel> {
       ],
     );
   }
+}
 
-  void _showCommentDialog(BuildContext context, String postId) {
-    final TextEditingController commentController = TextEditingController();
+void _showCommentDialog(BuildContext context, String postId) {
+  final TextEditingController commentController = TextEditingController();
 
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Add a Comment'),
-          content: TextField(
-            controller: commentController,
-            decoration: InputDecoration(hintText: "Enter your comment"),
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: Text('Add a Comment'),
+        content: TextField(
+          controller: commentController,
+          decoration: InputDecoration(hintText: "Enter your comment"),
+        ),
+        actions: <Widget>[
+          TextButton(
+            child: Text('Cancel'),
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
           ),
-          actions: <Widget>[
-            TextButton(
-              child: Text('Cancel'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-            TextButton(
-              child: Text('Post'),
-              onPressed: () async {
-                User? user = FirebaseAuth.instance.currentUser;
-                if (user != null && commentController.text.isNotEmpty) {
-                  await FirebaseFirestore.instance
-                      .collection('post')
-                      .doc(postId)
-                      .update({
-                    'comments': FieldValue.arrayUnion([
-                      {'text': commentController.text, 'userId': user.uid}
-                    ])
-                  });
-                }
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
-        );
-      },
-    );
-  }
+          TextButton(
+            child: Text('Post'),
+            onPressed: () async {
+              User? user = FirebaseAuth.instance.currentUser;
+              if (user != null && commentController.text.isNotEmpty) {
+                await FirebaseFirestore.instance
+                    .collection('post')
+                    .doc(postId)
+                    .update({
+                  'comments': FieldValue.arrayUnion([
+                    {'text': commentController.text, 'userId': user.uid}
+                  ])
+                });
+              }
+              Navigator.of(context).pop();
+            },
+          ),
+        ],
+      );
+    },
+  );
+}
 
-  void _pickImageFromGallery(Function(File?) setImage) async {
-    final ImagePicker _picker = ImagePicker();
-    XFile? pickedFile = await _picker.pickImage(source: ImageSource.gallery);
-    if (pickedFile != null) {
-      setImage(File(pickedFile.path));
-      _uploadImage(File(pickedFile.path)); // Upload image to Firebase Storage
-    }
+void _pickImageFromGallery(Function(File?) setImage) async {
+  final ImagePicker _picker = ImagePicker();
+  XFile? pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+  if (pickedFile != null) {
+    setImage(File(pickedFile.path));
+    _uploadImage(File(pickedFile.path)); // Upload image to Firebase Storage
   }
+}
 
-  Future<String?> _uploadImage(File imageFile) async {
-    String storageFolder = 'hubimages';
-    var storageRef = FirebaseStorage.instance
-        .ref()
-        .child(storageFolder)
-        .child(imageFile.path.split('/').last);
+Future<String?> _uploadImage(File imageFile) async {
+  String storageFolder = 'hubimages';
+  var storageRef = FirebaseStorage.instance
+      .ref()
+      .child(storageFolder)
+      .child(imageFile.path.split('/').last);
 
-    try {
-      await storageRef.putFile(imageFile);
-      String imageUrl = await storageRef.getDownloadURL();
-      return imageUrl;
-    } catch (e) {
-      print('Failed to upload image to Firebase Storage: $e');
-      return null;
-    }
+  try {
+    await storageRef.putFile(imageFile);
+    String imageUrl = await storageRef.getDownloadURL();
+    return imageUrl;
+  } catch (e) {
+    print('Failed to upload image to Firebase Storage: $e');
+    return null;
   }
+}
+
+Widget _buildDeletedPostsContent(
+    BuildContext context, VoidCallback toggleContent) {
+  return Stack(
+    children: [
+      StreamBuilder(
+        stream: FirebaseFirestore.instance
+            .collection('post')
+            .where('isDeleted',
+                isEqualTo: true) // Only get posts that are deleted
+            .snapshots(),
+        builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Center(child: CircularProgressIndicator());
+          }
+
+          if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}'));
+          }
+
+          if (snapshot.hasData && snapshot.data!.docs.isNotEmpty) {
+            return Column(
+              children: [
+                Expanded(
+                  child: ListView.builder(
+                    itemCount: snapshot.data!.docs.length,
+                    itemBuilder: (BuildContext context, int index) {
+                      var post = snapshot.data!.docs[index].data()
+                          as Map<String, dynamic>;
+                      var postId = snapshot.data!.docs[index].id;
+                      var username = post['username'] ?? 'Unknown';
+                      var imageUrl = post['imageUrl'];
+                      var caption = post['caption'] ?? 'No Caption';
+                      int likes = post['likes'] ?? 0;
+                      List<dynamic> likedBy = post['likedBy'] ?? [];
+                      List<dynamic> comments = post['comments'] ?? [];
+
+                      bool isExpanded = false;
+
+                      return StatefulBuilder(
+                        builder: (BuildContext context, StateSetter setState) {
+                          return Container(
+                            margin: EdgeInsets.symmetric(vertical: 8.0),
+                            padding: EdgeInsets.all(8.0),
+                            decoration: BoxDecoration(
+                              color: Color.fromARGB(255, 80, 96, 116),
+                              borderRadius: BorderRadius.circular(10.0),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        CircleAvatar(
+                                          backgroundColor: Colors.white,
+                                          radius: 16,
+                                          child: Icon(Icons.person,
+                                              color: Colors.grey),
+                                        ),
+                                        SizedBox(width: 8),
+                                        Text(username,
+                                            style:
+                                                TextStyle(color: Colors.white)),
+                                      ],
+                                    ),
+                                    IconButton(
+                                      icon: Icon(Icons.restore,
+                                          color: Colors.green), // Restore icon
+                                      onPressed: () {
+                                        showDialog(
+                                          context: context,
+                                          builder: (BuildContext context) {
+                                            return AlertDialog(
+                                              title: Text('Restore Post'),
+                                              content: Text(
+                                                  'Are you sure you want to restore this post?'),
+                                              actions: [
+                                                TextButton(
+                                                  child: Text('No'),
+                                                  onPressed: () {
+                                                    Navigator.of(context).pop();
+                                                  },
+                                                ),
+                                                TextButton(
+                                                  child: Text('Yes'),
+                                                  onPressed: () async {
+                                                    await FirebaseFirestore
+                                                        .instance
+                                                        .collection('post')
+                                                        .doc(postId)
+                                                        .update({
+                                                      'isDeleted': false
+                                                    });
+                                                    Navigator.of(context).pop();
+                                                  },
+                                                ),
+                                              ],
+                                            );
+                                          },
+                                        );
+                                      },
+                                    ),
+                                  ],
+                                ),
+                                SizedBox(height: 8),
+                                isExpanded
+                                    ? Column(
+                                        children: [
+                                          Text(caption,
+                                              style: TextStyle(
+                                                  color: Colors.white)),
+                                          InkWell(
+                                            onTap: () {
+                                              setState(() {
+                                                isExpanded = false;
+                                              });
+                                            },
+                                            child: Text('Show less',
+                                                style: TextStyle(
+                                                    color: Colors.blue)),
+                                          ),
+                                        ],
+                                      )
+                                    : Column(
+                                        children: [
+                                          Text(
+                                            caption.length > 100
+                                                ? '${caption.substring(0, 100)}...'
+                                                : caption,
+                                            style:
+                                                TextStyle(color: Colors.white),
+                                          ),
+                                          if (caption.length > 100)
+                                            InkWell(
+                                              onTap: () {
+                                                setState(() {
+                                                  isExpanded = true;
+                                                });
+                                              },
+                                              child: Text('Show more',
+                                                  style: TextStyle(
+                                                      color: Colors.blue)),
+                                            ),
+                                        ],
+                                      ),
+                                SizedBox(height: 8),
+                                imageUrl != null
+                                    ? Container(
+                                        height: 200,
+                                        color: Colors.grey,
+                                        child: Image.network(
+                                          imageUrl,
+                                          fit: BoxFit.cover,
+                                          width: double.infinity,
+                                        ),
+                                      )
+                                    : Container(
+                                        height: 200,
+                                        color: Colors.grey,
+                                        child: Center(
+                                          child: Text('No Image',
+                                              style: TextStyle(
+                                                  color: Colors.white)),
+                                        ),
+                                      ),
+                                SizedBox(height: 8),
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceAround,
+                                  children: [
+                                    InkWell(
+                                      onTap: () async {
+                                        User? user =
+                                            FirebaseAuth.instance.currentUser;
+                                        if (user != null) {
+                                          if (!likedBy.contains(user.uid)) {
+                                            await FirebaseFirestore.instance
+                                                .collection('post')
+                                                .doc(postId)
+                                                .update({
+                                              'likes': FieldValue.increment(1),
+                                              'likedBy': FieldValue.arrayUnion(
+                                                  [user.uid])
+                                            });
+                                          } else {
+                                            await FirebaseFirestore.instance
+                                                .collection('post')
+                                                .doc(postId)
+                                                .update({
+                                              'likes': FieldValue.increment(-1),
+                                              'likedBy': FieldValue.arrayRemove(
+                                                  [user.uid])
+                                            });
+                                          }
+                                        }
+                                      },
+                                      child: Row(
+                                        children: [
+                                          Icon(Icons.thumb_up,
+                                              color: likedBy.contains(
+                                                      FirebaseAuth.instance
+                                                          .currentUser?.uid)
+                                                  ? Colors.blue
+                                                  : Colors.white),
+                                          SizedBox(width: 4),
+                                          Text(
+                                              '$likes Like${likes == 1 ? '' : 's'}',
+                                              style: TextStyle(
+                                                  color: Colors.white)),
+                                        ],
+                                      ),
+                                    ),
+                                    InkWell(
+                                      onTap: () {
+                                        _showCommentDialog(context, postId);
+                                      },
+                                      child: Row(
+                                        children: [
+                                          Icon(Icons.comment,
+                                              color: Colors.white),
+                                          SizedBox(width: 4),
+                                          Text('Comment',
+                                              style: TextStyle(
+                                                  color: Colors.white)),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                if (comments.isNotEmpty)
+                                  Column(
+                                    children: comments.map<Widget>((comment) {
+                                      return ListTile(
+                                        title: Text(comment['username']),
+                                        subtitle: Text(comment['text']),
+                                      );
+                                    }).toList(),
+                                  ),
+                              ],
+                            ),
+                          );
+                        },
+                      );
+                    },
+                  ),
+                ),
+              ],
+            );
+          }
+
+          return Center(child: Text('No deleted posts found.'));
+        },
+      ),
+    ],
+  );
 }

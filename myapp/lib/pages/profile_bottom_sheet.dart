@@ -373,6 +373,7 @@ Widget _buildUploadsContent(BuildContext context) {
               .collection('post')
               .where('userId',
                   isEqualTo: FirebaseAuth.instance.currentUser!.uid)
+                   .where('isDeleted', isEqualTo: false)
               .snapshots(),
           builder:
               (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {

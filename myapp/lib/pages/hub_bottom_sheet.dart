@@ -199,6 +199,7 @@ Widget _buildMainContent(
                               selectedLocation!.longitude)
                           : null,
                       'timestamp': Timestamp.now(),
+                      'isDeleted': false
                     };
 
                     // Debugging: Print postData to ensure it's correct
@@ -396,60 +397,62 @@ Widget _buildRouteSection(BuildContext context) {
   );
 }
 
-Widget _buildAlternateContent(
-    BuildContext context, VoidCallback toggleContent) {
+Widget _buildAlternateContent(BuildContext context, VoidCallback toggleContent) {
   return Stack(
     children: [
       Container(
-       height: MediaQuery.of(context).size.height * 0.73,
-  margin: const EdgeInsets.only(bottom: 20.0), // Set specific margin here
-  child: StreamBuilder(
-    stream: FirebaseFirestore.instance.collection('post').snapshots(),
-    builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
-      if (snapshot.connectionState == ConnectionState.waiting) {
-        return Center(child: CircularProgressIndicator());
-      }
+        height: MediaQuery.of(context).size.height * 0.73,
+        margin: const EdgeInsets.only(bottom: 20.0),
+        child: StreamBuilder(
+          stream: FirebaseFirestore.instance
+              .collection('post')
+              .where('isDeleted', isEqualTo: false) // Filter out deleted posts
+              .snapshots(),
+          builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return Center(child: CircularProgressIndicator());
+            }
 
-      if (snapshot.hasError) {
-        return Center(child: Text('Error: ${snapshot.error}'));
-      }
+            if (snapshot.hasError) {
+              return Center(child: Text('Error: ${snapshot.error}'));
+            }
 
-      if (snapshot.hasData && snapshot.data!.docs.isNotEmpty) {
-        return Column(
-          children: [
-            Expanded(
-              child: ListView.builder(
-                itemCount: snapshot.data!.docs.length,
-                itemBuilder: (BuildContext context, int index) {
-                  var post = snapshot.data!.docs[index].data() as Map<String, dynamic>;
-                  var postId = snapshot.data!.docs[index].id;
-                  var username = post.containsKey('username') ? post['username'] : 'Unknown';
-                  var imageUrl = post.containsKey('imageUrl') ? post['imageUrl'] : null;
-                  var caption = post.containsKey('caption') ? post['caption'] : 'No Caption';
-                  int likes = post.containsKey('likes') ? post['likes'] : 0;
-                  List<dynamic> likedBy = post.containsKey('likedBy') ? post['likedBy'] : [];
-                  List<dynamic> comments = post.containsKey('comments') ? post['comments'] : [];
+            if (snapshot.hasData && snapshot.data!.docs.isNotEmpty) {
+              return Column(
+                children: [
+                  Expanded(
+                    child: ListView.builder(
+                      itemCount: snapshot.data!.docs.length,
+                      itemBuilder: (BuildContext context, int index) {
+                        var post = snapshot.data!.docs[index].data() as Map<String, dynamic>;
+                        var postId = snapshot.data!.docs[index].id;
+                        var username = post.containsKey('username') ? post['username'] : 'Unknown';
+                        var imageUrl = post.containsKey('imageUrl') ? post['imageUrl'] : null;
+                        var caption = post.containsKey('caption') ? post['caption'] : 'No Caption';
+                        int likes = post.containsKey('likes') ? post['likes'] : 0;
+                        List<dynamic> likedBy = post.containsKey('likedBy') ? post['likedBy'] : [];
+                        List<dynamic> comments = post.containsKey('comments') ? post['comments'] : [];
 
-                  return PostItem(
-                    postId: postId,
-                    username: username,
-                    caption: caption,
-                    likes: likes,
-                    likedBy: likedBy,
-                    comments: comments,
-                    imageUrl: imageUrl,
-                  );
-                },
-              ),
-            ),
-          ],
-        );
-      }
+                        return PostItem(
+                          postId: postId,
+                          username: username,
+                          caption: caption,
+                          likes: likes,
+                          likedBy: likedBy,
+                          comments: comments,
+                          imageUrl: imageUrl,
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              );
+            }
 
-      return Center(child: Text('No posts found.'));
-    },
-  ),
-),
+            return Center(child: Text('No posts found.'));
+          },
+        ),
+      ),
       Align(
         alignment: Alignment.bottomCenter,
         child: Container(
@@ -457,14 +460,14 @@ Widget _buildAlternateContent(
           height: 70,
           margin: EdgeInsets.all(8.0),
           child: ElevatedButton(
-            onPressed: toggleContent, // Toggle to show main content
+            onPressed: toggleContent,
             style: ButtonStyle(
               backgroundColor: MaterialStateProperty.all<Color>(
                 Color.fromARGB(255, 132, 143, 200),
-              ), // Button color
+              ),
               foregroundColor: MaterialStateProperty.all<Color>(
                 Colors.white,
-              ), // Text color
+              ),
               shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                 RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(100.0),
@@ -479,11 +482,11 @@ Widget _buildAlternateContent(
                     padding: const EdgeInsets.only(left: 1.0),
                     child: CircleAvatar(
                       backgroundColor: Colors.white,
-                      radius: 20, // Adjust radius as needed
+                      radius: 20,
                       child: Icon(
                         Icons.person,
                         color: Colors.grey,
-                      ), // Placeholder icon for profile picture
+                      ),
                     ),
                   ),
                 ),
@@ -502,6 +505,7 @@ Widget _buildAlternateContent(
     ],
   );
 }
+
 
 class PostItem extends StatefulWidget {
   final String postId;

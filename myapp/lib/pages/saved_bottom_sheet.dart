@@ -49,7 +49,7 @@ class _SavedBottomSheetState extends State<SavedBottomSheet> {
       List<Map<String, dynamic>> uniqueSavedPlaces = [];
 
       for (var doc in querySnapshot.docs) {
-        String? placeId = doc['placeId'] ?? doc['place_id'];
+        String? placeId = doc['placeId'];
         // Handle both field names
         final placeName = doc['placeName'] ?? 'Unknown Place';
         final docId = doc.id;
@@ -83,9 +83,9 @@ class _SavedBottomSheetState extends State<SavedBottomSheet> {
     }
   }
 
-  Future<Map<String, dynamic>> _fetchPlaceDetails(String place_id) async {
+  Future<Map<String, dynamic>> _fetchPlaceDetails(String placeId) async {
     final response = await http.get(Uri.parse(
-        'https://maps.googleapis.com/maps/api/place/details/json?place_id=$place_id&key=$googleApiKey'));
+        'https://maps.googleapis.com/maps/api/place/details/json?place_id=$placeId&key=$googleApiKey'));
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
       return data['result'];
@@ -443,7 +443,8 @@ class _PlaceDetailViewState extends State<PlaceDetailView> {
           child: StreamBuilder<QuerySnapshot>(
             stream: _firestore
                 .collection('ratings')
-                .where('placeId', isEqualTo: widget.placeDetails['placeId'])
+                .where('place_id', isEqualTo: widget.placeDetails['place_id'])
+                
                 .snapshots(),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
