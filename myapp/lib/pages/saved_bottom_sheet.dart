@@ -183,114 +183,110 @@ class _SavedBottomSheetState extends State<SavedBottomSheet> {
       String? imageUrl,
       Map<String, dynamic> placeDetails,
       String docId) {
-    return StatefulBuilder(
-      builder: (BuildContext context, StateSetter setState) {
-        return GestureDetector(
-          onTap: () {
-            _showPlaceDetails(placeDetails, imageUrl: imageUrl);
-          },
-          child: Container(
-            height: 150.0,
-            width: double.infinity,
-            margin: EdgeInsets.only(bottom: 16.0),
-            decoration: BoxDecoration(
-              color: Colors.grey[850],
-              borderRadius: BorderRadius.circular(8.0),
-            ),
-            child: Stack(
-              children: [
-                // Display the base image if available
-                if (imageUrl != null)
-                  Positioned.fill(
-                    child: Image.network(
-                      imageUrl,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Container();
-                      },
-                    ),
+    return GestureDetector(
+      onTap: () {
+        _showPlaceDetails(placeDetails, imageUrl: imageUrl);
+      },
+      child: Container(
+        height: 150.0,
+        width: double.infinity,
+        margin: EdgeInsets.only(bottom: 16.0),
+        decoration: BoxDecoration(
+          color: Colors.grey[850],
+          borderRadius: BorderRadius.circular(8.0),
+        ),
+        child: Stack(
+          children: [
+            // Display the base image if available
+            if (imageUrl != null)
+              Positioned.fill(
+                child: Image.network(
+                  imageUrl,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container();
+                  },
+                ),
+              ),
+            // Display the photoReference image if available
+            if (photoReference != null)
+              Positioned.fill(
+                child: Image.network(
+                  'https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=$photoReference&key=$googleApiKey',
+                  fit: BoxFit.cover,
+                  colorBlendMode: BlendMode.darken,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container();
+                  },
+                ),
+              ),
+            // Text and bookmark icon
+            Positioned(
+              left: 8.0,
+              bottom: 8.0,
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.place,
+                    color: Colors.white,
                   ),
-                // Display the photoReference image if available
-                if (photoReference != null)
-                  Positioned.fill(
-                    child: Image.network(
-                      'https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=$photoReference&key=$googleApiKey',
-                      fit: BoxFit.cover,
-                      // Adjust opacity if needed
-                      colorBlendMode: BlendMode.darken,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Container();
-                      },
-                    ),
-                  ),
-                // Text and bookmark icon
-                Positioned(
-                  left: 8.0,
-                  bottom: 8.0,
-                  child: Row(
+                  SizedBox(width: 4.0),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(
-                        Icons.place,
-                        color: Colors.white,
+                      Text(
+                        placeName,
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16.0,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                      SizedBox(width: 4.0),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            placeName,
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 16.0,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          Text(
-                            address,
-                            style: TextStyle(
-                              color: Colors.white70,
-                            ),
-                          ),
-                        ],
+                      Text(
+                        address,
+                        style: TextStyle(
+                          color: Colors.white70,
+                        ),
                       ),
                     ],
                   ),
-                ),
-                Positioned(
-                  right: 8.0,
-                  bottom: 8.0,
-                  child: IconButton(
-                    icon: Icon(
-                      Icons.bookmark,
-                      color: Colors.white,
-                    ),
-                     onPressed: () {
-    _toggleSavedState(docId); // Pass the document ID to remove the place
-  },
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        );
-      },
+            Positioned(
+              right: 8.0,
+              bottom: 8.0,
+              child: IconButton(
+                icon: Icon(
+                  Icons.bookmark,
+                  color: Colors.white,
+                ),
+                onPressed: () {
+                  _toggleSavedState(
+                      docId); // Pass the document ID to remove the place
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
   Future<void> _toggleSavedState(String docId) async {
-  final docRef = _firestore.collection('save').doc(docId);
+    final docRef = _firestore.collection('save').doc(docId);
 
-  // Check if the document exists
-  final docSnapshot = await docRef.get();
-  if (docSnapshot.exists) {
-    // Delete the document to remove the saved place
-    await docRef.delete();
-    setState(() {
-      // Trigger a rebuild to update the UI
-      _fetchSavedPlacesWithDetails(); // Refresh saved places after deletion
-    });
+    // Check if the document exists
+    final docSnapshot = await docRef.get();
+    if (docSnapshot.exists) {
+      // Delete the document to remove the saved place
+      await docRef.delete();
+      setState(() {
+        // Trigger a rebuild to update the UI
+        _fetchSavedPlacesWithDetails(); // Refresh saved places after deletion
+      });
+    }
   }
-}
 }
 
 class PlaceDetailView extends StatefulWidget {

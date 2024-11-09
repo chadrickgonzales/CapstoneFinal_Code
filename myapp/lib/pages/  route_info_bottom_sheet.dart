@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:myapp/pages/google_map_page.dart';
 import 'package:myapp/services/routeservice.dart';
+
 
 class RouteInfoBottomSheet extends StatefulWidget {
   final String estimatedTime;
@@ -107,8 +109,15 @@ class RouteInfoBottomSheetState extends State<RouteInfoBottomSheet> {
               SizedBox(height: 10),
               ElevatedButton(
                 onPressed: () {
+                  Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (BuildContext context) => MapSample(), // Rebuild the app
+              ),
+            );
                   widget.routeService.cancelRoute();
                   widget.routeService.dispose();
+                  
 
                   widget.onClose(); // Call the close callback when closing
                 },

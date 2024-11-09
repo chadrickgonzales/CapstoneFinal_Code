@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert'; // For JSON decoding
 import 'dart:math' as math; // Import for mathematical operations
 import 'dart:math';
+import 'package:myapp/pages/google_map_page.dart';
 import 'package:myapp/pages/route_button.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -13,6 +14,8 @@ import '../pages/  route_info_bottom_sheet.dart';
 
 
 class RouteService {
+  bool _isLocationRequestCancelled = false;
+  bool _isRouteCancelled = false;
   bool isLocationUpdatesCancelled = false;
   StreamSubscription? progressStreamSubscription;
   bool isRouteCancelled = false;
@@ -480,43 +483,66 @@ Future<String> _calculateETA(double distance) async {
   return '${minutes} min';
 }
 
-  Future<LatLng?> _getCurrentLocation() async {
-    try {
-      final LocationData locationData = await _location.getLocation();
-      return LatLng(locationData.latitude!, locationData.longitude!);
-    } catch (e) {
-      print("Error getting current location: $e");
+ Future<LatLng?> _getCurrentLocation() async {
+  if (_isLocationRequestCancelled) {
+    print("Location request has been cancelled.");
+    return null;
+  }
+
+  try {
+    final LocationData locationData = await _location.getLocation();
+
+    // Check again after receiving location data in case of cancellation during fetch
+    if (_isLocationRequestCancelled) {
+      print("Location request has been cancelled after receiving location data.");
       return null;
     }
+
+    return LatLng(locationData.latitude!, locationData.longitude!);
+  } catch (e) {
+    print("Error getting current location: $e");
+    return null;
   }
+}
 
   Future<List<LatLng>> _getRoute(LatLng from, LatLng to) async {
-    final String url =
-        'https://maps.googleapis.com/maps/api/directions/json?origin=${from.latitude},${from.longitude}&destination=${to.latitude},${to.longitude}&key=$apiKey';
+  // Check if the route fetch has been cancelled
+  if (_isRouteCancelled) {
+    print("Route fetching has been cancelled.");
+    return [];
+  }
 
-    try {
-      final response = await http.get(Uri.parse(url));
+  final String url =
+      'https://maps.googleapis.com/maps/api/directions/json?origin=${from.latitude},${from.longitude}&destination=${to.latitude},${to.longitude}&key=$apiKey';
 
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        final routes = data['routes'];
-        if (routes.isNotEmpty) {
-          final points = routes[0]['overview_polyline']['points'];
-          return _decodePolyline(points);
-        } else {
-          print("No routes found for the given points.");
-          return [];
-        }
-      } else {
-        print(
-            "Failed to fetch data from Directions API: ${response.statusCode}");
-        return [];
-      }
-    } catch (e) {
-      print("Error fetching route: $e");
+  try {
+    final response = await http.get(Uri.parse(url));
+
+    // Check again after the response is received in case of cancellation during fetch
+    if (_isRouteCancelled) {
+      print("Route fetching has been cancelled after receiving response.");
       return [];
     }
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      final routes = data['routes'];
+      if (routes.isNotEmpty) {
+        final points = routes[0]['overview_polyline']['points'];
+        return _decodePolyline(points);
+      } else {
+        print("No routes found for the given points.");
+        return [];
+      }
+    } else {
+      print("Failed to fetch data from Directions API: ${response.statusCode}");
+      return [];
+    }
+  } catch (e) {
+    print("Error fetching route: $e");
+    return [];
   }
+}
 
   List<LatLng> _decodePolyline(String encoded) {
     List<LatLng> polyline = [];
@@ -598,11 +624,12 @@ Future<String> _calculateETA(double distance) async {
 }
 
  Future<void> calculateProgress(LatLng newDeviceLocation, LatLng destinationLocation) async {
-  double distance = _calculateDistance(newDeviceLocation, destinationLocation);
-  String estimatedTime = await _calculateETA(distance);
- if (isRouteCancelled) {
+   if (isRouteCancelled) {
     return;  // If route is cancelled, stop calculating progress.
   }
+  double distance = _calculateDistance(newDeviceLocation, destinationLocation);
+  String estimatedTime = await _calculateETA(distance);
+
   progressStreamController.add({
     'distance': distance,
     'estimatedTime': estimatedTime,
@@ -636,6 +663,9 @@ Future<String> _calculateETA(double distance) async {
   }
 
   void cancelRoute() {
+    restartApp; 
+    _isLocationRequestCancelled = true;
+    _isRouteCancelled = true;
      isLocationUpdatesCancelled = true;
    isRouteCancelled = true;
     progressStreamSubscription?.cancel();
@@ -1029,3 +1059,9 @@ Future<double> _calculateRemainingDistance(LatLng from, LatLng to) async {
 }
 
   
+void restartApp(BuildContext context) {
+  Navigator.of(context).pushAndRemoveUntil(
+    MaterialPageRoute(builder: (context) => MapSample()),  // Replace with your root widget
+    (route) => false,
+  );
+}

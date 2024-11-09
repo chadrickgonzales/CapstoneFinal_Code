@@ -356,7 +356,7 @@ class _SearchBottomSheetState extends State<SearchBottomSheet>
                 width: MediaQuery.of(context).size.width - 32.0,
                 padding: EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
                 decoration: BoxDecoration(
-                  color: Color.fromRGBO(141, 138, 140, 0.8),
+                  color: Color.fromARGB(255, 193, 187, 191),
                   borderRadius: BorderRadius.circular(30.0),
                   border: Border.all(color: Colors.white),
                 ),
