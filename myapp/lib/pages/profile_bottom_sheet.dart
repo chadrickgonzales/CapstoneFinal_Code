@@ -139,41 +139,43 @@ Future<void> displayBottomSheet_profile(
                             !showEditListContent &&
                             !showSettingsContent) ...[
                           Row(
-  mainAxisAlignment: MainAxisAlignment.start,
-  crossAxisAlignment: CrossAxisAlignment.center, // Center items vertically
-  children: [
-    Container(
-      width: 80,
-      height: 80,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: Colors.white,
-      ),
-      child: Center(
-        child: Icon(
-          Icons.person,
-          size: 40,
-          color: Color.fromARGB(225, 41, 42, 60),
-        ),
-      ),
-    ),
-    SizedBox(width: 16.0),
-    Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisAlignment: MainAxisAlignment.center, // Center text vertically in the row
-      children: [
-        Text(
-          username, // Display fetched username here
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 20,
-          ),
-        ),
-        SizedBox(height: 4.0),
-      ],
-    ),
-  ],
-),
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            crossAxisAlignment: CrossAxisAlignment
+                                .center, // Center items vertically
+                            children: [
+                              Container(
+                                width: 80,
+                                height: 80,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: Colors.white,
+                                ),
+                                child: Center(
+                                  child: Icon(
+                                    Icons.person,
+                                    size: 40,
+                                    color: Color.fromARGB(225, 41, 42, 60),
+                                  ),
+                                ),
+                              ),
+                              SizedBox(width: 16.0),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisAlignment: MainAxisAlignment
+                                    .center, // Center text vertically in the row
+                                children: [
+                                  Text(
+                                    username, // Display fetched username here
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 20,
+                                    ),
+                                  ),
+                                  SizedBox(height: 4.0),
+                                ],
+                              ),
+                            ],
+                          ),
                           SizedBox(height: 16.0),
                           Center(
                             child: ElevatedButton(
@@ -1053,13 +1055,13 @@ Widget _buildLibraryContent(
                   }
 
                   if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-    return Center(
-        child: Text(
-            'No lists found',
-            style: TextStyle(color: Colors.white),
-        ),
-    );
-}
+                    return Center(
+                      child: Text(
+                        'No lists found',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    );
+                  }
 
                   final documents = snapshot.data!.docs;
 
@@ -1162,15 +1164,6 @@ Widget _buildLibraryContent(
                 },
               )
             ] else if (selectedListSubButton == 'By others') ...[
-              Row(
-                children: [
-                  Spacer(), // Push the IconButton to the right
-                  IconButton(
-                    icon: Icon(Icons.add, color: Colors.white),
-                    onPressed: toggleContent,
-                  ),
-                ],
-              ),
               StreamBuilder<QuerySnapshot>(
                 stream: FirebaseFirestore.instance
                     .collection('listbyothers')
@@ -1316,112 +1309,121 @@ Widget _buildLibraryContent(
                 ],
               ),
               // Fetch and display the list content from Firestore
-             
-            StreamBuilder<QuerySnapshot>(
-  stream: FirebaseFirestore.instance
-      .collection('list')
-      .where('userId',   isEqualTo: FirebaseAuth.instance.currentUser?.uid) // Filter by userId
-      .snapshots(),
-  builder: (context, snapshot) {
-    if (snapshot.connectionState == ConnectionState.waiting) {
-      return Center(child: CircularProgressIndicator());
-    }
-    if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-      return Center(
-        child: Text(
-          'No lists found',
-          style: TextStyle(color: Colors.white),
-        ),
-      );
-    }
 
-    final documents = snapshot.data!.docs;
-
-    return Column(
-      children: documents.map((doc) {
-        final data = doc.data() as Map<String, dynamic>;
-        final String listId = doc.id; // Get the list ID
-
-        return GestureDetector(
-          onTap: () {
-            setState(() {
-              isListContentClicked = true;
-              clickedListContent = data['name'] ?? 'Unknown';
-              selectedListId = listId; // Store the selected list ID
-            });
-          },
-          child: Container(
-            color: Colors.transparent,
-            padding: const EdgeInsets.all(16.0),
-            margin: const EdgeInsets.symmetric(vertical: 8.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Icon(Icons.copy, color: Colors.white),
-                Text(
-                  data['name'] != null && data['name'].length > 30
-                      ? '${data['name'].substring(0, 30)}...' // Limit to 30 characters and add ellipsis
-                      : data['name'] ?? 'Unnamed List',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                  ),
-                  maxLines: 1, // Ensure the text stays on one line
-                  overflow: TextOverflow.ellipsis, // Add ellipsis if the text exceeds available space
-                ),
-                PopupMenuButton<String>(
-                  icon: Icon(Icons.more_vert, color: Colors.white),
-                  itemBuilder: (BuildContext context) {
-                    return [
-                      PopupMenuItem<String>(
-                        value: 'delete',
-                        child: Text('Delete List'),
+              StreamBuilder<QuerySnapshot>(
+                stream: FirebaseFirestore.instance
+                    .collection('list')
+                    .where('userId',
+                        isEqualTo: FirebaseAuth
+                            .instance.currentUser?.uid) // Filter by userId
+                    .snapshots(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return Center(child: CircularProgressIndicator());
+                  }
+                  if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                    return Center(
+                      child: Text(
+                        'No lists found',
+                        style: TextStyle(color: Colors.white),
                       ),
-                    ];
-                  },
-                  onSelected: (String value) {
-                    if (value == 'delete') {
-                      showDialog(
-                        context: context,
-                        builder: (context) => AlertDialog(
-                          title: Text('Confirm Deletion'),
-                          content: Text(
-                              'Are you sure you want to delete this list?'),
-                          actions: [
-                            TextButton(
-                              onPressed: () {
-                                FirebaseFirestore.instance
-                                    .collection('list')
-                                    .doc(doc.id) // Use the doc ID to delete the specific document
-                                    .delete()
-                                    .then((_) {
-                                  Navigator.of(context).pop(); // Close dialog
-                                }).catchError((error) {
-                                  print('Failed to delete list: $error');
-                                });
-                              },
-                              child: Text('Yes'),
-                            ),
-                            TextButton(
-                              onPressed: () {
-                                Navigator.of(context).pop();
-                              },
-                              child: Text('No'),
-                            ),
-                          ],
+                    );
+                  }
+
+                  final documents = snapshot.data!.docs;
+
+                  return Column(
+                    children: documents.map((doc) {
+                      final data = doc.data() as Map<String, dynamic>;
+                      final String listId = doc.id; // Get the list ID
+
+                      return GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            isListContentClicked = true;
+                            clickedListContent = data['name'] ?? 'Unknown';
+                            selectedListId =
+                                listId; // Store the selected list ID
+                          });
+                        },
+                        child: Container(
+                          color: Colors.transparent,
+                          padding: const EdgeInsets.all(16.0),
+                          margin: const EdgeInsets.symmetric(vertical: 8.0),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Icon(Icons.copy, color: Colors.white),
+                              Text(
+                                data['name'] != null && data['name'].length > 30
+                                    ? '${data['name'].substring(0, 30)}...' // Limit to 30 characters and add ellipsis
+                                    : data['name'] ?? 'Unnamed List',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                ),
+                                maxLines:
+                                    1, // Ensure the text stays on one line
+                                overflow: TextOverflow
+                                    .ellipsis, // Add ellipsis if the text exceeds available space
+                              ),
+                              PopupMenuButton<String>(
+                                icon:
+                                    Icon(Icons.more_vert, color: Colors.white),
+                                itemBuilder: (BuildContext context) {
+                                  return [
+                                    PopupMenuItem<String>(
+                                      value: 'delete',
+                                      child: Text('Delete List'),
+                                    ),
+                                  ];
+                                },
+                                onSelected: (String value) {
+                                  if (value == 'delete') {
+                                    showDialog(
+                                      context: context,
+                                      builder: (context) => AlertDialog(
+                                        title: Text('Confirm Deletion'),
+                                        content: Text(
+                                            'Are you sure you want to delete this list?'),
+                                        actions: [
+                                          TextButton(
+                                            onPressed: () {
+                                              FirebaseFirestore.instance
+                                                  .collection('list')
+                                                  .doc(doc
+                                                      .id) // Use the doc ID to delete the specific document
+                                                  .delete()
+                                                  .then((_) {
+                                                Navigator.of(context)
+                                                    .pop(); // Close dialog
+                                              }).catchError((error) {
+                                                print(
+                                                    'Failed to delete list: $error');
+                                              });
+                                            },
+                                            child: Text('Yes'),
+                                          ),
+                                          TextButton(
+                                            onPressed: () {
+                                              Navigator.of(context).pop();
+                                            },
+                                            child: Text('No'),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                  }
+                                },
+                              ),
+                            ],
+                          ),
                         ),
                       );
-                    }
-                  },
-                ),
-              ],
-            ),
-          ),
-        );
-      }).toList(),
-    );
-  },
-),
+                    }).toList(),
+                  );
+                },
+              ),
             ],
           ] else if (isListContentClicked) ...[
             SingleChildScrollView(
@@ -1670,7 +1672,7 @@ Widget _buildLibraryContent(
                                 child: Text(
                                   'Posted by: $username',
                                   style: TextStyle(
-                                      color: Colors.white, fontSize: 18),
+                                      color: Colors.white, fontSize: 12),
                                 ));
                           }, // end of builder (for username FutureBuilder)
                         );
@@ -1997,7 +1999,10 @@ Widget _buildLibraryContent(
                                                                             SizedBox(height: 8.0),
                                                                             Text(
                                                                               username.length > 10 ? '${username.substring(0, 10)}...' : username,
-                                                                              style: TextStyle(color: Colors.white),
+                                                                              style: TextStyle(
+                                                                                color: Colors.white,
+                                                                                fontSize: 7.0, // Set the desired font size here
+                                                                              ),
                                                                               overflow: TextOverflow.ellipsis, // Handle overflow
                                                                             ),
                                                                           ],
@@ -2423,18 +2428,11 @@ Widget _buildLibraryContent(
                                                   doc['name'] ?? 'Place Name',
                                                   style: TextStyle(
                                                     color: Colors.white,
-                                                    fontSize: 18.0,
+                                                    fontSize: 16.0,
                                                     fontWeight: FontWeight.bold,
                                                   ),
                                                 ),
                                                 SizedBox(height: 8.0),
-                                                Text(
-                                                  'Address',
-                                                  style: TextStyle(
-                                                    color: Colors.white,
-                                                    fontSize: 14.0,
-                                                  ),
-                                                ),
                                               ],
                                             ),
                                           ),
@@ -2580,150 +2578,6 @@ Widget _buildLibraryContent(
                       },
                     ),
                     SizedBox(height: 60.0),
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        "Recommended Places",
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                    SizedBox(height: 16.0),
-                    SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        children: [
-                          Container(
-                            height: 320,
-                            width: 320.0,
-                            padding: EdgeInsets.all(16.0),
-                            decoration: BoxDecoration(
-                              color: Color.fromARGB(255, 90, 111, 132),
-                              borderRadius: BorderRadius.circular(12.0),
-                            ),
-                            child: Stack(
-                              children: [
-                                Positioned(
-                                  top: 16.0,
-                                  left: 16.0,
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        'Place Name 1',
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 18.0,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                      SizedBox(height: 8.0),
-                                      Text(
-                                        'address',
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 14.0,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                Positioned(
-                                  top: 80.0,
-                                  left: 0.0,
-                                  right: 0.0,
-                                  child: Container(
-                                    width: 200.0,
-                                    height: 200.0,
-                                    decoration: BoxDecoration(
-                                      color: Colors.black,
-                                      borderRadius: BorderRadius.circular(12.0),
-                                    ),
-                                    child: Center(
-                                      child: Text(
-                                        'Placeholder Image',
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 16.0,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          SizedBox(width: 16.0),
-                          Container(
-                            height: 320,
-                            width: 320.0,
-                            padding: EdgeInsets.all(16.0),
-                            decoration: BoxDecoration(
-                              color: Color.fromARGB(255, 90, 111, 132),
-                              borderRadius: BorderRadius.circular(12.0),
-                            ),
-                            child: Stack(
-                              children: [
-                                Positioned(
-                                  top: 16.0,
-                                  left: 16.0,
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        'Place Name 2',
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 18.0,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                      SizedBox(height: 8.0),
-                                      Text(
-                                        'address',
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 14.0,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                Positioned(
-                                  top: 80.0,
-                                  left: 0.0,
-                                  right: 0.0,
-                                  child: Container(
-                                    width: 200.0,
-                                    height: 200.0,
-                                    decoration: BoxDecoration(
-                                      color: Colors.black,
-                                      borderRadius: BorderRadius.circular(12.0),
-                                    ),
-                                    child: Center(
-                                      child: Text(
-                                        'Placeholder Image',
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 16.0,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
                     SizedBox(height: 16.0),
                   ],
                 ),
@@ -3281,9 +3135,13 @@ Widget _buildLibraryContent(
                                                                                 10
                                                                             ? '${username.substring(0, 10)}...'
                                                                             : username,
-                                                                        style: TextStyle(
-                                                                            color:
-                                                                                Colors.white),
+                                                                        style:
+                                                                            TextStyle(
+                                                                          color:
+                                                                              Colors.white,
+                                                                          fontSize:
+                                                                              7.0, // Set the desired font size here
+                                                                        ),
                                                                         overflow:
                                                                             TextOverflow.ellipsis, // Handle overflow
                                                                       ),
@@ -3597,18 +3455,11 @@ Widget _buildLibraryContent(
                                                   doc['name'] ?? 'Place Name',
                                                   style: TextStyle(
                                                     color: Colors.white,
-                                                    fontSize: 18.0,
+                                                    fontSize: 16.0,
                                                     fontWeight: FontWeight.bold,
                                                   ),
                                                 ),
                                                 SizedBox(height: 8.0),
-                                                Text(
-                                                  'Address',
-                                                  style: TextStyle(
-                                                    color: Colors.white,
-                                                    fontSize: 14.0,
-                                                  ),
-                                                ),
                                               ],
                                             ),
                                           ),
@@ -5144,10 +4995,7 @@ Widget _buildSettingsContent(BuildContext context, VoidCallback toggleContent) {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Row(
-             
-            ),
-           
+            Row(),
           ],
         ),
       ),
@@ -5158,9 +5006,7 @@ Widget _buildSettingsContent(BuildContext context, VoidCallback toggleContent) {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Row(
-              
-            ),
+            Row(),
             GestureDetector(
               onTap: () {
                 // Handle Account tap if needed
