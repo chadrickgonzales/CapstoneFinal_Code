@@ -373,7 +373,6 @@ Widget _buildUploadsContent(BuildContext context) {
               .collection('post')
               .where('userId',
                   isEqualTo: FirebaseAuth.instance.currentUser!.uid)
-                   .where('isDeleted', isEqualTo: false)
               .snapshots(),
           builder:
               (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
@@ -621,7 +620,11 @@ Widget _buildUploadsContent(BuildContext context) {
               );
             }
 
-            return Center(child: Text('No posts available.'));
+            return Center(
+                child: Text(
+              'No posts available.',
+              style: TextStyle(color: Colors.white),
+            ));
           },
         ),
       ],
@@ -733,7 +736,12 @@ Widget _buildReviewsContent() {
       }
 
       if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-        return Center(child: Text('No reviews found.'));
+        return Center(
+          child: Text(
+            'No reviews found.',
+            style: TextStyle(color: Colors.white), // Set font color to white
+          ),
+        );
       }
 
       final reviews = snapshot.data!.docs;
@@ -949,7 +957,11 @@ Widget _buildLibraryContent(
                   return Center(child: CircularProgressIndicator());
                 }
                 if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                  return Center(child: Text('No pins found'));
+                  return Center(
+                      child: Text(
+                    'No pins found',
+                    style: TextStyle(color: Colors.white),
+                  ));
                 }
 
                 final documents = snapshot.data!.docs;
@@ -1176,7 +1188,11 @@ Widget _buildLibraryContent(
                     return Center(child: CircularProgressIndicator());
                   }
                   if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                    return Center(child: Text('No lists found!'));
+                    return Center(
+                        child: Text(
+                      'No lists found!',
+                      style: TextStyle(color: Colors.white),
+                    ));
                   }
 
                   final documents = snapshot.data!.docs;
