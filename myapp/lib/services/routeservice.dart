@@ -492,7 +492,6 @@ Future<String> _calculateETA(double distance) async {
   try {
     final LocationData locationData = await _location.getLocation();
 
-    // Check again after receiving location data in case of cancellation during fetch
     if (_isLocationRequestCancelled) {
       print("Location request has been cancelled after receiving location data.");
       return null;
@@ -507,7 +506,6 @@ Future<String> _calculateETA(double distance) async {
 }
 
   Future<List<LatLng>> _getRoute(LatLng from, LatLng to) async {
-  // Check if the route fetch has been cancelled
   if (_isRouteCancelled) {
     print("Route fetching has been cancelled.");
     return [];
