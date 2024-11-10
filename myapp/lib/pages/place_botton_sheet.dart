@@ -85,6 +85,7 @@ class _AddPlaceBottomSheetState extends State<AddPlaceBottomSheet> {
   LatLng? _selectedLocation;
   File? _selectedImage;
   String _selectedCategory = 'Sights'; // Default category
+  
 
   void _pickLocation(BuildContext context) async {
     final result = await Navigator.push(
@@ -208,29 +209,30 @@ class _AddPlaceBottomSheetState extends State<AddPlaceBottomSheet> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24.0),
             child: Container(
-              width: MediaQuery.of(context).size.width *
-                  0.75, // 75% of screen width
-              child: DropdownButtonFormField<String>(
-                value: _selectedCategory,
-                items: [
-                  'Sights',
-                  'Parks',
-                  'Stations',
-                  'Food',
-                  'Hotel',
-                  'Other',
-                ].map((category) {
-                  return DropdownMenuItem<String>(
-                    value: category,
-                    child:
-                        Text(category, style: TextStyle(color: Colors.white)),
-                  );
-                }).toList(),
-                onChanged: (value) {
-                  setState(() {
-                    _selectedCategory = value!;
-                  });
-                },
+  width: MediaQuery.of(context).size.width * 0.75, // 75% of screen width
+  child: DropdownButtonFormField<String>(
+    value: _selectedCategory,
+    items: [
+      'Sights',
+      'Parks',
+      'Stations',
+      'Food',
+      'Hotel',
+      'Other',
+    ].map((category) {
+      return DropdownMenuItem<String>(
+        value: category,
+        child: Text(
+          category,
+          style: TextStyle(color: Colors.white),
+        ),
+      );
+    }).toList(),
+    onChanged: (value) {
+      setState(() {
+        _selectedCategory = value!;
+      });
+    },
                 decoration: InputDecoration(
                   labelText: 'Select Category',
                   labelStyle: TextStyle(

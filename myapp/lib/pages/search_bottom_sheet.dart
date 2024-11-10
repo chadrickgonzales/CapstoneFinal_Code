@@ -168,49 +168,68 @@ class _SearchBottomSheetState extends State<SearchBottomSheet>
   }
 
   void _showPlaceDetails(Map<String, dynamic> place) async {
-    setState(() {
-      _selectedPlace = place;
-      _showDetails = true;
-    });
+  setState(() {
+    _selectedPlace = place;
+    _showDetails = true;
+  });
 
-    final currentUser = FirebaseAuth.instance.currentUser;
-    final userId = currentUser?.uid;
+  final currentUser = FirebaseAuth.instance.currentUser;
+  final userId = currentUser?.uid;
 
-    if (userId != null && _selectedPlace != null) {
-      // Handle placeId and placeName for both Firestore and Google Maps API
-      final placeId =
-          _selectedPlace!['place_id'] ?? _selectedPlace!['placeId'] ?? '';
-      final placeName =
-          _selectedPlace!['name'] ?? _selectedPlace!['placeName'] ?? '';
-      final types = _selectedPlace!['types'];
-      String category = _determineCategory(types);
+  if (userId != null && _selectedPlace != null) {
+    final placeId =
+        _selectedPlace!['place_id'] ?? _selectedPlace!['placeId'] ?? '';
+    final placeName =
+        _selectedPlace!['name'] ?? _selectedPlace!['placeName'] ?? '';
+    final types = _selectedPlace!['types'];
+    
+    String? category;
 
-      // Fetch combined place details from Firestore and Google Places API
-      try {
-        final combinedPlaceDetails =
-            await _fetchPlaceDetails(placeId, placeName);
-        setState(() {
-          _selectedPlace = combinedPlaceDetails;
-        });
-      } catch (e) {
-        print('Error fetching place details: $e');
+    // Fetch category from Firestore collection if it exists
+    try {
+      final firestoreDoc = await FirebaseFirestore.instance
+          .collection('place')
+          .doc(placeId)
+          .get();
+
+      if (firestoreDoc.exists && firestoreDoc.data()?['category'] != null) {
+        category = firestoreDoc.data()?['category'];
+      } else {
+        // Fallback to determining category based on place types if Firestore category is not available
+        category = _determineCategory(types);
       }
+    } catch (e) {
+      print('Error fetching category from Firestore: $e');
+      // Fallback to category determination if Firestore fetch fails
+      category = _determineCategory(types);
+    }
 
-      // Save to Firestore 'recent' collection
-      try {
-        await FirebaseFirestore.instance.collection('recent').add({
-          'placeName': _selectedPlace!['name'] ?? _selectedPlace!['placeName'],
-          'placeId': _selectedPlace!['place_id'] ?? _selectedPlace!['placeId'],
-          'category': category,
-          'userId': userId,
-          'timestamp': FieldValue.serverTimestamp(),
-          'imageUrl': _selectedPlace!['imageUrl'] ?? '',
-        });
-      } catch (e) {
-        print('Error saving to Firestore: $e');
-      }
+    // Fetch combined place details from Firestore and Google Places API
+    try {
+      final combinedPlaceDetails =
+          await _fetchPlaceDetails(placeId, placeName);
+      setState(() {
+        _selectedPlace = combinedPlaceDetails;
+      });
+    } catch (e) {
+      print('Error fetching place details: $e');
+    }
+
+    // Save to Firestore 'recent' collection
+    try {
+      await FirebaseFirestore.instance.collection('recent').add({
+        'placeName': _selectedPlace!['name'] ?? _selectedPlace!['placeName'],
+        'placeId': _selectedPlace!['place_id'] ?? _selectedPlace!['placeId'],
+        'category': category,
+        'userId': userId,
+        'timestamp': FieldValue.serverTimestamp(),
+        'imageUrl': _selectedPlace!['imageUrl'] ?? '',
+      });
+    } catch (e) {
+      print('Error saving to Firestore: $e');
     }
   }
+}
 
   String _determineCategory(List<dynamic>? types) {
     if (types != null && types is List<dynamic>) {
@@ -223,17 +242,17 @@ class _SearchBottomSheetState extends State<SearchBottomSheet>
         'park',
         'amusement_park',
         'aquarium',
-        'zoo'
+        'zoo','Sights',
       ])) {
         return 'Sights';
-      } else if (_containsAny(types, ['park', 'natural_feature'])) {
+      } else if (_containsAny(types, ['park', 'natural_feature','Parks'])) {
         return 'Parks';
       } else if (_containsAny(
-          types, ['train_station', 'bus_station', 'subway_station'])) {
+          types, ['train_station', 'bus_station', 'subway_station','Stations'])) {
         return 'Stations';
-      } else if (_containsAny(types, ['restaurant', 'cafe', 'bakery'])) {
+      } else if (_containsAny(types, ['restaurant', 'cafe', 'bakery','Food'])) {
         return 'Food';
-      } else if (_containsAny(types, ['lodging', 'hotel', 'hostel'])) {
+      } else if (_containsAny(types, ['lodging', 'hotel', 'hostel','Hotel'])) {
         return 'Hotel';
       } else {
         return 'Other';
