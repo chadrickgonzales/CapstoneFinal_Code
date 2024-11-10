@@ -1106,8 +1106,8 @@ Widget _buildLibraryContent(
                             Icon(Icons.copy, color: Colors.white),
                             SizedBox(width: 8.0),
                             Text(
-                              clickedListContent.length > 15
-                                  ? '${clickedListContent.substring(0, 15)}...' // Limit to 25 characters with ellipsis
+                              clickedListContent.length > 12
+                                  ? '${clickedListContent.substring(0, 12)}...' // Limit to 25 characters with ellipsis
                                   : clickedListContent,
                               style: TextStyle(
                                 color: Colors.white,

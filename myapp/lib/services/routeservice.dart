@@ -504,7 +504,7 @@ Future<String> _calculateETA(double distance) async {
       print("Location request has been cancelled after receiving location data.");
       return null;
     }
- print("Current location: Latitude: ${locationData.latitude}, Longitude: ${locationData.longitude}");
+ print("Current location: Latitude: , Longitude: ");
     return LatLng(locationData.latitude!, locationData.longitude!);
     
   } catch (e) {
