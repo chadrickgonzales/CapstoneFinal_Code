@@ -168,68 +168,68 @@ class _SearchBottomSheetState extends State<SearchBottomSheet>
   }
 
   void _showPlaceDetails(Map<String, dynamic> place) async {
-  setState(() {
-    _selectedPlace = place;
-    _showDetails = true;
-  });
+    setState(() {
+      _selectedPlace = place;
+      _showDetails = true;
+    });
 
-  final currentUser = FirebaseAuth.instance.currentUser;
-  final userId = currentUser?.uid;
+    final currentUser = FirebaseAuth.instance.currentUser;
+    final userId = currentUser?.uid;
 
-  if (userId != null && _selectedPlace != null) {
-    final placeId =
-        _selectedPlace!['place_id'] ?? _selectedPlace!['placeId'] ?? '';
-    final placeName =
-        _selectedPlace!['name'] ?? _selectedPlace!['placeName'] ?? '';
-    final types = _selectedPlace!['types'];
-    
-    String? category;
+    if (userId != null && _selectedPlace != null) {
+      final placeId =
+          _selectedPlace!['place_id'] ?? _selectedPlace!['placeId'] ?? '';
+      final placeName =
+          _selectedPlace!['name'] ?? _selectedPlace!['placeName'] ?? '';
+      final types = _selectedPlace!['types'];
 
-    // Fetch category from Firestore collection if it exists
-    try {
-      final firestoreDoc = await FirebaseFirestore.instance
-          .collection('place')
-          .doc(placeId)
-          .get();
+      String? category;
 
-      if (firestoreDoc.exists && firestoreDoc.data()?['category'] != null) {
-        category = firestoreDoc.data()?['category'];
-      } else {
-        // Fallback to determining category based on place types if Firestore category is not available
+      // Fetch category from Firestore collection if it exists
+      try {
+        final firestoreDoc = await FirebaseFirestore.instance
+            .collection('place')
+            .doc(placeId)
+            .get();
+
+        if (firestoreDoc.exists && firestoreDoc.data()?['category'] != null) {
+          category = firestoreDoc.data()?['category'];
+        } else {
+          // Fallback to determining category based on place types if Firestore category is not available
+          category = _determineCategory(types);
+        }
+      } catch (e) {
+        print('Error fetching category from Firestore: $e');
+        // Fallback to category determination if Firestore fetch fails
         category = _determineCategory(types);
       }
-    } catch (e) {
-      print('Error fetching category from Firestore: $e');
-      // Fallback to category determination if Firestore fetch fails
-      category = _determineCategory(types);
-    }
 
-    // Fetch combined place details from Firestore and Google Places API
-    try {
-      final combinedPlaceDetails =
-          await _fetchPlaceDetails(placeId, placeName);
-      setState(() {
-        _selectedPlace = combinedPlaceDetails;
-      });
-    } catch (e) {
-      print('Error fetching place details: $e');
-    }
+      // Fetch combined place details from Firestore and Google Places API
+      try {
+        final combinedPlaceDetails =
+            await _fetchPlaceDetails(placeId, placeName);
+        setState(() {
+          _selectedPlace = combinedPlaceDetails;
+        });
+      } catch (e) {
+        print('Error fetching place details: $e');
+      }
 
-    // Save to Firestore 'recent' collection
-    try {
-      await FirebaseFirestore.instance.collection('recent').add({
-        'placeName': _selectedPlace!['name'] ?? _selectedPlace!['placeName'],
-        'placeId': _selectedPlace!['place_id'] ?? _selectedPlace!['placeId'],
-        'category': category,
-        'userId': userId,
-        'timestamp': FieldValue.serverTimestamp(),
-        'imageUrl': _selectedPlace!['imageUrl'] ?? '',
-      });
-    } catch (e) {
-      print('Error saving to Firestore: $e');
+      // Save to Firestore 'recent' collection
+      try {
+        await FirebaseFirestore.instance.collection('recent').add({
+          'placeName': _selectedPlace!['name'] ?? _selectedPlace!['placeName'],
+          'placeId': _selectedPlace!['place_id'] ?? _selectedPlace!['placeId'],
+          'category': category,
+          'userId': userId,
+          'timestamp': FieldValue.serverTimestamp(),
+          'imageUrl': _selectedPlace!['imageUrl'] ?? '',
+        });
+      } catch (e) {
+        print('Error saving to Firestore: $e');
+      }
     }
   }
-}
 
   String _determineCategory(List<dynamic>? types) {
     if (types != null && types is List<dynamic>) {
@@ -242,17 +242,19 @@ class _SearchBottomSheetState extends State<SearchBottomSheet>
         'park',
         'amusement_park',
         'aquarium',
-        'zoo','Sights',
+        'zoo',
+        'Sights',
       ])) {
         return 'Sights';
-      } else if (_containsAny(types, ['park', 'natural_feature','Parks'])) {
+      } else if (_containsAny(types, ['park', 'natural_feature', 'Parks'])) {
         return 'Parks';
-      } else if (_containsAny(
-          types, ['train_station', 'bus_station', 'subway_station','Stations'])) {
+      } else if (_containsAny(types,
+          ['train_station', 'bus_station', 'subway_station', 'Stations'])) {
         return 'Stations';
-      } else if (_containsAny(types, ['restaurant', 'cafe', 'bakery','Food'])) {
+      } else if (_containsAny(
+          types, ['restaurant', 'cafe', 'bakery', 'Food'])) {
         return 'Food';
-      } else if (_containsAny(types, ['lodging', 'hotel', 'hostel','Hotel'])) {
+      } else if (_containsAny(types, ['lodging', 'hotel', 'hostel', 'Hotel'])) {
         return 'Hotel';
       } else {
         return 'Other';
@@ -371,35 +373,60 @@ class _SearchBottomSheetState extends State<SearchBottomSheet>
                   : 16.0,
               left: 16.0,
               right: 16.0,
-              child: Container(
-                width: MediaQuery.of(context).size.width - 32.0,
-                padding: EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
-                decoration: BoxDecoration(
-                  color: Color.fromARGB(255, 193, 187, 191),
-                  borderRadius: BorderRadius.circular(30.0),
-                  border: Border.all(color: Colors.white),
-                ),
-                child: TextField(
-                  focusNode: _focusNode,
-                  decoration: InputDecoration(
-                    hintText: 'Looking for...',
-                    hintStyle: TextStyle(color: Colors.white),
-                    border: InputBorder.none,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Add the Delete Recent Searches button here
+                  ElevatedButton(
+                    onPressed: () {
+                      // No functionality, button is just for UI
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.transparent,
+                      shadowColor: Colors.transparent,
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                    ),
+                    child: Text(
+                      'Delete Recent Searches',
+                      style: TextStyle(color: Colors.white),
+                    ),
                   ),
-                  style: TextStyle(color: Colors.white),
-                  onChanged: (value) {
-                    setState(() {
-                      _searchQuery = value ?? '';
-                    });
-                    if (_searchQuery.isNotEmpty) {
-                      _searchPlaces(_searchQuery);
-                    } else {
-                      setState(() {
-                        _places.clear();
-                      });
-                    }
-                  },
-                ),
+                  SizedBox(
+                      height:
+                          8.0), // Space between the button and the text field
+                  Container(
+                    width: MediaQuery.of(context).size.width - 32.0,
+                    padding:
+                        EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+                    decoration: BoxDecoration(
+                      color: Color.fromARGB(255, 193, 187, 191),
+                      borderRadius: BorderRadius.circular(30.0),
+                      border: Border.all(color: Colors.white),
+                    ),
+                    child: TextField(
+                      focusNode: _focusNode,
+                      decoration: InputDecoration(
+                        hintText: 'Looking for...',
+                        hintStyle: TextStyle(color: Colors.white),
+                        border: InputBorder.none,
+                      ),
+                      style: TextStyle(color: Colors.white),
+                      onChanged: (value) {
+                        setState(() {
+                          _searchQuery = value ?? '';
+                        });
+                        if (_searchQuery.isNotEmpty) {
+                          _searchPlaces(_searchQuery);
+                        } else {
+                          setState(() {
+                            _places.clear();
+                          });
+                        }
+                      },
+                    ),
+                  ),
+                ],
               ),
             ),
           Positioned(
