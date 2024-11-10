@@ -78,7 +78,7 @@ class _SearchBottomSheetState extends State<SearchBottomSheet>
       return;
     }
 
-    final apiKey = 'AIzaSyAocNg3WkX5ppmhc-vTf1IHvG75EM1Rr5k';
+    final apiKey = 'AIzaSyANC6OfmrgsOcypf8rHrKaVCvvS89kQRMM';
     final googlePlacesUrl =
         'https://maps.googleapis.com/maps/api/place/textsearch/json?query=$query&key=$apiKey';
     final response = await http.get(Uri.parse(googlePlacesUrl));
@@ -101,7 +101,7 @@ class _SearchBottomSheetState extends State<SearchBottomSheet>
   String? _getPhotoUrl(String? photoReference) {
     if (photoReference == null) return null;
     final apiKey =
-        'AIzaSyAocNg3WkX5ppmhc-vTf1IHvG75EM1Rr5k'; // Replace with your Google Maps API key
+        'AIzaSyANC6OfmrgsOcypf8rHrKaVCvvS89kQRMM'; // Replace with your Google Maps API key
     return 'https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=$photoReference&key=$apiKey';
   }
 
@@ -111,7 +111,7 @@ class _SearchBottomSheetState extends State<SearchBottomSheet>
 
     if (placeId.isNotEmpty) {
       // Fetch Google Maps API details
-      const String apiKey = 'AIzaSyAocNg3WkX5ppmhc-vTf1IHvG75EM1Rr5k';
+      const String apiKey = 'AIzaSyANC6OfmrgsOcypf8rHrKaVCvvS89kQRMM';
       final String url =
           'https://maps.googleapis.com/maps/api/place/details/json?place_id=$placeId&key=$apiKey';
 

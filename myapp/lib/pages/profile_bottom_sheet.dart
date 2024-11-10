@@ -959,7 +959,7 @@ Widget _buildLibraryContent(
                 if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
                   return Center(
                       child: Text(
-                    'No pins found',
+                    'No pins found.',
                     style: TextStyle(color: Colors.white),
                   ));
                 }
@@ -1190,7 +1190,7 @@ Widget _buildLibraryContent(
                   if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
                     return Center(
                         child: Text(
-                      'No lists found!',
+                      'No lists found.',
                       style: TextStyle(color: Colors.white),
                     ));
                   }
@@ -1505,7 +1505,7 @@ Widget _buildLibraryContent(
                                   polylines: polylines,
                                   routePoints: [],
                                   apiKey:
-                                      'AIzaSyAocNg3WkX5ppmhc-vTf1IHvG75EM1Rr5k',
+                                      'AIzaSyANC6OfmrgsOcypf8rHrKaVCvvS89kQRMM',
                                 );
 
                                 // Create the bottom sheet state variable
@@ -2663,7 +2663,7 @@ Widget _buildLibraryContent(
                                   polylines: polylines,
                                   routePoints: [],
                                   apiKey:
-                                      'AIzaSyAocNg3WkX5ppmhc-vTf1IHvG75EM1Rr5k',
+                                      'AIzaSyANC6OfmrgsOcypf8rHrKaVCvvS89kQRMM',
                                 );
 
                                 // Create the bottom sheet state variable
@@ -4627,7 +4627,7 @@ Widget _buildAddToListContent(
   final TextEditingController _searchController = TextEditingController();
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final String _apiKey =
-      'AIzaSyAocNg3WkX5ppmhc-vTf1IHvG75EM1Rr5k'; // Replace with your actual API key
+      'AIzaSyANC6OfmrgsOcypf8rHrKaVCvvS89kQRMM'; // Replace with your actual API key
 
   final String _currentListId = listId;
 
@@ -4651,7 +4651,7 @@ Widget _buildAddToListContent(
 
       // Step 2: If not found in Firestore, fetch from Google Maps API
       const googleApiKey =
-          'AIzaSyAocNg3WkX5ppmhc-vTf1IHvG75EM1Rr5k'; // Replace with your API key
+          'AIzaSyANC6OfmrgsOcypf8rHrKaVCvvS89kQRMM'; // Replace with your API key
       final url =
           'https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input=$placeName&inputtype=textquery&fields=geometry&key=$googleApiKey';
 

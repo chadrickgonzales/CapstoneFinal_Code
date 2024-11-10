@@ -390,22 +390,30 @@ Future<Map<String, dynamic>> startRoute(
             ));
 
             // Set bounds to fit both device location and destination on the map
-            LatLngBounds bounds = LatLngBounds(
-                southwest: LatLng(
-                    math.min(deviceLocation.latitude, toLocation.latitude),
-                    math.min(deviceLocation.longitude, toLocation.longitude),
-                ),
-                northeast: LatLng(
-                    math.max(deviceLocation.latitude, toLocation.latitude),
-                    math.max(deviceLocation.longitude, toLocation.longitude),
-                ),
-            );
+           LatLngBounds bounds = LatLngBounds(
+    southwest: LatLng(
+      math.min(deviceLocation.latitude, toLocation.latitude),
+      math.min(deviceLocation.longitude, toLocation.longitude),
+    ),
+    northeast: LatLng(
+      math.max(deviceLocation.latitude, toLocation.latitude),
+      math.max(deviceLocation.longitude, toLocation.longitude),
+    ),
+  );
 
-            if (mapController != null) {
-                mapController.animateCamera(CameraUpdate.newLatLngBounds(bounds, 100.0));
-            } else {
-                print('Error: MapController is not initialized.');
-            }
+  // Calculate midpoint between the two locations
+  LatLng midpoint = LatLng(
+    (deviceLocation.latitude + toLocation.latitude) / 2,
+    (deviceLocation.longitude + toLocation.longitude) / 2,
+  );
+
+  // Animate to midpoint with an initial zoom for smooth transition
+  mapController.animateCamera(CameraUpdate.newLatLngZoom(midpoint, 14.0));
+
+  // Follow up with bounds animation to include both locations after a delay
+  Future.delayed(Duration(milliseconds: 500), () {
+    mapController.animateCamera(CameraUpdate.newLatLngBounds(bounds, 100.0));
+  });
 
             // Call _calculateProgress to start calculating the distance and ETA
             await calculateProgress(deviceLocation, toLocation);
@@ -925,7 +933,7 @@ Future<List<LatLng>> _getRoute1(LatLng from, LatLng to) async {
   print('Fetching route from $from to $to.');
 
   // Replace with your Google Directions API key
-  const String apiKey = 'AIzaSyAocNg3WkX5ppmhc-vTf1IHvG75EM1Rr5k';
+  const String apiKey = 'AIzaSyANC6OfmrgsOcypf8rHrKaVCvvS89kQRMM';
 
   final String url =
       'https://maps.googleapis.com/maps/api/directions/json?origin=${from.latitude},${from.longitude}&destination=${to.latitude},${to.longitude}&key=$apiKey';
@@ -996,7 +1004,7 @@ List<LatLng> _decodePolyline1(String encoded) {
 
 
  Future<String> _getLocationName(LatLng location) async {
-  final apiKey = 'AIzaSyAocNg3WkX5ppmhc-vTf1IHvG75EM1Rr5k'; // Replace with your API key
+  final apiKey = 'AIzaSyANC6OfmrgsOcypf8rHrKaVCvvS89kQRMM'; // Replace with your API key
   final url = 'https://maps.googleapis.com/maps/api/geocode/json?latlng=${location.latitude},${location.longitude}&key=$apiKey';
 
   final response = await http.get(Uri.parse(url));
@@ -1010,7 +1018,7 @@ List<LatLng> _decodePolyline1(String encoded) {
   return 'Unknown Location';
 }
 Future<String> _getEstimatedTime(LatLng from, LatLng to) async {
-  const String apiKey = 'AIzaSyAocNg3WkX5ppmhc-vTf1IHvG75EM1Rr5k'; // Replace with your API key
+  const String apiKey = 'AIzaSyANC6OfmrgsOcypf8rHrKaVCvvS89kQRMM'; // Replace with your API key
   final String url = 'https://maps.googleapis.com/maps/api/directions/json?origin=${from.latitude},${from.longitude}&destination=${to.latitude},${to.longitude}&key=$apiKey';
 
   final response = await http.get(Uri.parse(url));

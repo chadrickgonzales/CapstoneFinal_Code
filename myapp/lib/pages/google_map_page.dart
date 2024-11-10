@@ -140,7 +140,7 @@ void _checkAdminStatus() async {
       markers: _markers,
       polylines: _polylines,
       routePoints: [],
-      apiKey: 'AIzaSyAocNg3WkX5ppmhc-vTf1IHvG75EM1Rr5k',
+      apiKey: 'AIzaSyANC6OfmrgsOcypf8rHrKaVCvvS89kQRMM',
     );
 
     // Start the route with the RouteService
@@ -162,7 +162,7 @@ Future<void> _startRoute(String fromAddress, String toAddress) async {
       markers: _markers,
       polylines: _polylines,
       routePoints: [],
-      apiKey: 'AIzaSyAocNg3WkX5ppmhc-vTf1IHvG75EM1Rr5k',
+      apiKey: 'AIzaSyANC6OfmrgsOcypf8rHrKaVCvvS89kQRMM',
     );
 
     try {
@@ -203,7 +203,7 @@ Future<void> _startRoute(String fromAddress, String toAddress) async {
       markers: _markers,
       polylines: _polylines,
       routePoints: [], // Pass existing routePoints
-      apiKey: 'AIzaSyAocNg3WkX5ppmhc-vTf1IHvG75EM1Rr5k',
+      apiKey: 'AIzaSyANC6OfmrgsOcypf8rHrKaVCvvS89kQRMM',
     );
 
     try {
@@ -232,22 +232,36 @@ Future<void> _startRoute(String fromAddress, String toAddress) async {
         resizeToAvoidBottomInset: false,
         body: Stack(
           children: [
-            GoogleMap(
-              zoomControlsEnabled: false,
-              mapType: MapType.normal,
-              markers: _markers,
-              polygons: _polygons,
-              polylines: _polylines,
-              trafficEnabled: true, // Enable real-time traffic
-              initialCameraPosition: CameraPosition(
-                target: LatLng(
-                    currentLocation!.latitude!, currentLocation!.longitude!),
-                zoom: 14.0,
-              ),
-              onMapCreated: (GoogleMapController controller) {
-                _controller.complete(controller);
-              },
-            ),
+           GoogleMap(
+  zoomControlsEnabled: false,
+  mapType: MapType.normal,
+  markers: _markers,
+  polygons: _polygons,
+  polylines: _polylines,
+  trafficEnabled: true, // Enable real-time traffic
+  initialCameraPosition: CameraPosition(
+    target: LatLng(currentLocation!.latitude!, currentLocation!.longitude!),
+    zoom: 12.0,
+  ),
+  onMapCreated: (GoogleMapController controller) {
+    _controller.complete(controller);
+
+    // Ensure the marker for the current location is set once the map is created
+    if (currentLocation != null) {
+      setState(() {
+        _markers.clear(); // Clear any existing markers
+
+        _markers.add(
+          Marker(
+            markerId: const MarkerId("currentLocation"),
+            position: LatLng(currentLocation!.latitude!, currentLocation!.longitude!),
+            icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen), // Change color to red
+          ),
+        );
+      });
+    }
+  },
+),
            
             Positioned(
               bottom: 15.0,
@@ -416,6 +430,28 @@ Future<void> _startRoute(String fromAddress, String toAddress) async {
                 ),
               ),
             ),
+          Positioned(
+  bottom: 200.0,
+  right: 16.0,
+  child: FloatingActionButton(
+    onPressed: () async {
+      if (currentLocation != null) {
+        final GoogleMapController mapController = await _controller.future;
+        mapController.animateCamera(
+          CameraUpdate.newCameraPosition(
+            CameraPosition(
+              target: LatLng(currentLocation!.latitude!, currentLocation!.longitude!),
+                zoom: 18.0, // Set your desired zoom level here
+            ),
+          ),
+        );
+      } else {
+        print('Current location is not yet available.');
+      }
+    },
+    child: Icon(Icons.my_location),
+  ),
+),
             Positioned(
               bottom: 90.0,
               right: 10.0,
