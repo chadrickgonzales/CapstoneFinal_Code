@@ -19,61 +19,64 @@ class _RegisterWithEmailFormState extends State<RegisterWithEmailForm> {
   String _successMessage = '';
 
   void _registerWithEmailAndPassword() async {
-    String email = _emailController.text.trim();
-    String password = _passwordController.text.trim();
-    String username = _usernameController.text.trim();
+  String email = _emailController.text.trim();
+  String password = _passwordController.text.trim();
+  String username = _usernameController.text.trim();
 
-    if (email.isEmpty || password.isEmpty) {
-      setState(() {
-        _error = 'Please enter both email and password.';
-        _successMessage = '';
-      });
-      return;
-    }
-
-    try {
-      // Create user
-      UserCredential userCredential =
-          await _auth.createUserWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
-
-      User? user = userCredential.user;
-
-      if (user != null) {
-        // Add user to Firestore immediately
-        await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
-          'username': username,
-          'email': email,
-          'createdAt': FieldValue.serverTimestamp(),
-          'isVerified': false,
-          'isAdmin': false,
-          'isDeactivate': false
-        });
-
-        // Send email verification
-        await user.sendEmailVerification();
-
-        // Optionally update user profile with username
-        await user.updateProfile(displayName: username);
-
-        setState(() {
-          _successMessage =
-              'Account created. Check your email for verification.';
-          _error = '';
-        });
-
-        // Prompt user to check their email
-        _showVerificationDialog();
-      }
-    } catch (e) {
-      setState(() {
-        _error = 'Failed to register: $e';
-        _successMessage = '';
-      });
-    }
+  if (email.isEmpty || password.isEmpty) {
+    setState(() {
+      _error = 'Please enter both email and password.';
+      _successMessage = '';
+    });
+    return;
   }
+
+  try {
+    // Create user
+    UserCredential userCredential =
+        await _auth.createUserWithEmailAndPassword(
+      email: email,
+      password: password,
+    );
+
+    User? user = userCredential.user;
+
+    if (user != null) {
+      // Add user to Firestore immediately
+      await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+        'username': username,
+        'email': email,
+        'createdAt': FieldValue.serverTimestamp(),
+        'isVerified': false,
+        'isAdmin': false,
+        'isDeactivate': false
+      });
+
+      // Send email verification
+      await user.sendEmailVerification();
+
+      // Optionally update user profile with username
+      await user.updateProfile(displayName: username);
+
+      setState(() {
+        _successMessage =
+            'Account created. Check your email for verification.';
+        _error = '';
+      });
+
+      // Sign out the user to prevent login before verification
+      await FirebaseAuth.instance.signOut();
+
+      // Prompt user to check their email
+      _showVerificationDialog();
+    }
+  } catch (e) {
+    setState(() {
+      _error = 'Failed to register: $e';
+      _successMessage = '';
+    });
+  }
+}
 
   void _showVerificationDialog() {
     showDialog(
