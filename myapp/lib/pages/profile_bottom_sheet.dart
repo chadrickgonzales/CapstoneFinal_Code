@@ -437,7 +437,8 @@ Widget _buildUploadsContent(BuildContext context) {
                                         color: Colors.white),
                                     onSelected: (value) async {
                                       if (value == 'edit') {
-                                        await showModalBottomSheet(
+                                        // Show the edit caption dialog
+                                        await showDialog(
                                           context: context,
                                           builder: (BuildContext context) {
                                             TextEditingController
@@ -445,34 +446,72 @@ Widget _buildUploadsContent(BuildContext context) {
                                                 TextEditingController(
                                                     text: caption);
 
-                                            return Padding(
-                                              padding: EdgeInsets.all(16.0),
-                                              child: Column(
-                                                mainAxisSize: MainAxisSize.min,
-                                                children: [
-                                                  TextField(
-                                                    controller:
-                                                        captionController,
-                                                    decoration: InputDecoration(
-                                                      labelText: 'Edit Caption',
-                                                      filled: true,
-                                                      fillColor: Colors.white,
+                                            return Dialog(
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(10.0),
+                                              ),
+                                              elevation: 16,
+                                              child: Padding(
+                                                padding: EdgeInsets.all(16.0),
+                                                child: Column(
+                                                  mainAxisSize:
+                                                      MainAxisSize.min,
+                                                  children: [
+                                                    TextField(
+                                                      controller:
+                                                          captionController,
+                                                      decoration:
+                                                          InputDecoration(
+                                                        labelText:
+                                                            'Edit Caption',
+                                                        filled: true,
+                                                        fillColor: Colors.white,
+                                                      ),
+                                                      maxLines: 3,
                                                     ),
-                                                    maxLines: 3,
-                                                  ),
-                                                  SizedBox(height: 8),
-                                                  ElevatedButton(
-                                                    onPressed: () {
-                                                      _updatePost(
-                                                          context,
-                                                          postId,
-                                                          captionController
-                                                              .text);
-                                                      Navigator.pop(context);
-                                                    },
-                                                    child: Text('Save'),
-                                                  ),
-                                                ],
+                                                    SizedBox(height: 8),
+                                                    Row(
+                                                      mainAxisAlignment:
+                                                          MainAxisAlignment
+                                                              .end, // Move buttons to the right
+                                                      children: [
+                                                        TextButton(
+                                                          onPressed: () {
+                                                            Navigator.pop(
+                                                                context); // Close the dialog without saving
+                                                          },
+                                                          child: Text(
+                                                            'Cancel',
+                                                            style: TextStyle(
+                                                                color: Colors
+                                                                    .red), // Style for Cancel button
+                                                          ),
+                                                        ),
+                                                        SizedBox(
+                                                            width:
+                                                                8), // Add space between the buttons
+                                                        TextButton(
+                                                          onPressed: () {
+                                                            _updatePost(
+                                                                context,
+                                                                postId,
+                                                                captionController
+                                                                    .text);
+                                                            Navigator.pop(
+                                                                context); // Close the dialog
+                                                          },
+                                                          child: Text(
+                                                            'Save',
+                                                            style: TextStyle(
+                                                                color: Colors
+                                                                    .blue), // Style for Save button
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ],
+                                                ),
                                               ),
                                             );
                                           },
@@ -1792,7 +1831,6 @@ Widget _buildLibraryContent(
                                           TextEditingController
                                               searchController =
                                               TextEditingController();
-                                          List<DocumentSnapshot> userList = [];
                                           List<DocumentSnapshot>
                                               filteredUserList =
                                               []; // New list to hold filtered results
@@ -1800,53 +1838,38 @@ Widget _buildLibraryContent(
                                               selectedUserId; // Allow null for initial state
 
                                           // Firestore user search function
-
-                                          // Function to fetch initial users when the dialog opens
-                                          Future<void> fetchInitialUsers(
+                                          Future<void> searchUsers(String query,
                                               StateSetter setState) async {
                                             try {
-                                              QuerySnapshot snapshot =
-                                                  await FirebaseFirestore
-                                                      .instance
-                                                      .collection('users')
-                                                      .get();
-                                              setState(() {
-                                                userList = snapshot
-                                                    .docs; // Store all users
-                                                filteredUserList = List.from(
-                                                    userList); // Show all users initially
-                                              });
-                                              print(
-                                                  "Fetched ${snapshot.docs.length} initial users.");
+                                              if (query.isNotEmpty) {
+                                                // Fetch users based on the search query
+                                                QuerySnapshot snapshot =
+                                                    await FirebaseFirestore
+                                                        .instance
+                                                        .collection('users')
+                                                        .where('username',
+                                                            isGreaterThanOrEqualTo:
+                                                                query)
+                                                        .where('username',
+                                                            isLessThanOrEqualTo:
+                                                                query +
+                                                                    '\uf8ff')
+                                                        .get();
+
+                                                setState(() {
+                                                  filteredUserList = snapshot
+                                                      .docs; // Store filtered results
+                                                });
+                                              } else {
+                                                setState(() {
+                                                  filteredUserList =
+                                                      []; // Reset if no search query
+                                                });
+                                              }
                                             } catch (e) {
                                               print(
-                                                  "Error fetching initial users: $e");
+                                                  "Error searching users: $e");
                                             }
-                                          }
-
-// Search function to filter users based on the search query
-                                          void searchUsers(String query,
-                                              StateSetter setState) {
-                                            setState(() {
-                                              if (query.isNotEmpty) {
-                                                filteredUserList =
-                                                    userList.where((userDoc) {
-                                                  String username =
-                                                      (userDoc.data() as Map<
-                                                                  String,
-                                                                  dynamic>)[
-                                                              'username'] ??
-                                                          '';
-                                                  return username
-                                                      .toLowerCase()
-                                                      .contains(query
-                                                          .toLowerCase()); // Case insensitive search
-                                                }).toList();
-                                              } else {
-                                                filteredUserList = List.from(
-                                                    userList); // Reset to original if no query
-                                              }
-                                            });
                                           }
 
                                           showDialog(
@@ -1855,14 +1878,12 @@ Widget _buildLibraryContent(
                                               bool showShareButton = false;
                                               List<bool> isChecked =
                                                   List.generate(
-                                                      13, (index) => false);
+                                                      20, (index) => false);
                                               bool showMessage = false;
 
                                               return StatefulBuilder(
                                                 builder: (BuildContext context,
                                                     StateSetter setState) {
-                                                  fetchInitialUsers(
-                                                      setState); // Fetch initial users once when the dialog opens
                                                   return Dialog(
                                                     backgroundColor:
                                                         Colors.transparent,
@@ -1936,7 +1957,7 @@ Widget _buildLibraryContent(
                                                                   (query) {
                                                                 searchUsers(
                                                                     query,
-                                                                    setState); // Pass the setState to update the user list
+                                                                    setState); // Fetch users dynamically based on the search query
                                                               },
                                                             ),
                                                           ),
@@ -1957,7 +1978,7 @@ Widget _buildLibraryContent(
                                                               ),
                                                               itemCount:
                                                                   filteredUserList
-                                                                      .length, // Show only filtered results
+                                                                      .length, // Only show filtered results
                                                               itemBuilder:
                                                                   (context,
                                                                       index) {
@@ -2988,7 +3009,7 @@ Widget _buildLibraryContent(
                                       builder: (BuildContext context) {
                                         bool showShareButton = false;
                                         List<bool> isChecked =
-                                            List.generate(13, (index) => false);
+                                            List.generate(20, (index) => false);
                                         bool showMessage = false;
 
                                         return StatefulBuilder(
