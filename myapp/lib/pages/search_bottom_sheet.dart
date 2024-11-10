@@ -307,6 +307,48 @@ class _SearchBottomSheetState extends State<SearchBottomSheet>
     return querySnapshot.docs;
   }
 
+void _deleteRecentSearches(String placeId) async {
+  final currentUser = FirebaseAuth.instance.currentUser;
+  if (currentUser == null) return; // Ensure user is authenticated
+
+  // Query Firestore to get recent documents matching both userId and placeId
+  final querySnapshot = await _firestore
+      .collection('recent')
+      .where('userId', isEqualTo: currentUser.uid)
+      .where('placeId', isEqualTo: placeId)
+      .get();
+
+  // Delete each document that matches the criteria
+  for (var doc in querySnapshot.docs) {
+    await doc.reference.delete();
+  }
+
+  setState(() {
+    _places.removeWhere((place) => place['placeId'] == placeId); // Remove place from local list
+  });
+}
+
+ void _deleteAllRecentSearches() async {
+  final currentUser = FirebaseAuth.instance.currentUser;
+  if (currentUser == null) return; // Ensure user is authenticated
+
+  // Query Firestore to get recent documents matching both userId and placeId
+  final querySnapshot = await _firestore
+      .collection('recent')
+      .where('userId', isEqualTo: currentUser.uid)
+      .get();
+
+  // Delete each document that matches the criteria
+  for (var doc in querySnapshot.docs) {
+    await doc.reference.delete();
+  }
+
+  setState(() {
+    _places.clear(); // Clear local list after deletion if necessary
+  });
+}
+
+
   @override
   Widget build(BuildContext context) {
     return FractionallySizedBox(
@@ -378,20 +420,17 @@ class _SearchBottomSheetState extends State<SearchBottomSheet>
                 children: [
                   // Add the Delete Recent Searches button here
                   ElevatedButton(
-                    onPressed: () {
-                      // No functionality, button is just for UI
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.transparent,
-                      shadowColor: Colors.transparent,
-                      padding:
-                          EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                    ),
-                    child: Text(
-                      'Delete Recent Searches',
-                      style: TextStyle(color: Colors.white),
-                    ),
-                  ),
+                              onPressed: _deleteAllRecentSearches, // Replace with the actual placeId
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.transparent,
+                                shadowColor: Colors.transparent,
+                                padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                              ),
+                              child: Text(
+                                'Delete Recent Searches',
+                                style: TextStyle(color: Colors.white),
+                              ),
+                            ),
                   SizedBox(
                       height:
                           8.0), // Space between the button and the text field
@@ -448,27 +487,26 @@ class _SearchBottomSheetState extends State<SearchBottomSheet>
                   border: Border.all(color: Colors.white),
                 ),
                 child: ListView.builder(
-                  shrinkWrap: true,
-                  itemCount: _places.length,
-                  itemBuilder: (context, index) {
-                    final place = _places[index];
-                    return ListTile(
-                      //NAIBA ANG PART NA TOH
-                      title: Text(
-                        place['name'] ?? place['placeName'] ?? 'Unknown Place',
-                        style: TextStyle(
-                            color: Colors.white, fontWeight: FontWeight.bold),
-                      ),
-                      subtitle: Text(
-                        place['formatted_address'] ??
-                            place['placeId'] ??
-                            'Unknown Location',
-                        style: TextStyle(color: Colors.white70),
-                      ),
-                      onTap: () => _showPlaceDetails(place),
-                    );
-                  },
-                ),
+  shrinkWrap: true,
+  itemCount: _places.length,
+  itemBuilder: (context, index) {
+    final place = _places[index];
+    final placeId = place['placeId']; // Assuming each place has a placeId
+
+    return ListTile(
+      title: Text(
+        place['name'] ?? place['placeName'] ?? 'Unknown Place',
+        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+      ),
+      subtitle: Text(
+        place['formatted_address'] ?? 'Unknown Location',
+        style: TextStyle(color: Colors.white70),
+      ),
+      
+      onTap: () => _showPlaceDetails(place),
+    );
+  },
+),
               ),
             ),
           ),
@@ -703,7 +741,10 @@ class _SearchBottomSheetState extends State<SearchBottomSheet>
                                 ],
                               ),
                             ),
-
+    IconButton(
+        icon: Icon(Icons.delete, color: Colors.red),
+        onPressed: () => _deleteRecentSearches(placeId), // Pass specific placeId
+      ),
                             // Icon Button (bookmark)
                             IconButton(
                               icon: Icon(
