@@ -125,10 +125,6 @@ Future<void> displayBottomSheet_otherprofile(
                                 fontSize: 24,
                               ),
                             ),
-                            IconButton(
-                              onPressed: toggleSettingsContent,
-                              icon: Icon(Icons.menu, color: Colors.white),
-                            ),
                           ],
                         ),
                         SizedBox(height: 16.0),
@@ -138,43 +134,44 @@ Future<void> displayBottomSheet_otherprofile(
                             !showEditListContent &&
                             !showSettingsContent) ...[
                           Row(
-  mainAxisAlignment: MainAxisAlignment.start,
-  crossAxisAlignment: CrossAxisAlignment.center, // Center items vertically
-  children: [
-    Container(
-      width: 80,
-      height: 80,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: Colors.white,
-      ),
-      child: Center(
-        child: Icon(
-          Icons.person,
-          size: 40,
-          color: Color.fromARGB(225, 41, 42, 60),
-        ),
-      ),
-    ),
-    SizedBox(width: 16.0),
-    Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisAlignment: MainAxisAlignment.center, // Center text vertically in the row
-      children: [
-        Text(
-          username, // Display fetched username here
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 20,
-          ),
-        ),
-        SizedBox(height: 4.0),
-      ],
-    ),
-  ],
-),
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            crossAxisAlignment: CrossAxisAlignment
+                                .center, // Center items vertically
+                            children: [
+                              Container(
+                                width: 80,
+                                height: 80,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: Colors.white,
+                                ),
+                                child: Center(
+                                  child: Icon(
+                                    Icons.person,
+                                    size: 40,
+                                    color: Color.fromARGB(225, 41, 42, 60),
+                                  ),
+                                ),
+                              ),
+                              SizedBox(width: 16.0),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisAlignment: MainAxisAlignment
+                                    .center, // Center text vertically in the row
+                                children: [
+                                  Text(
+                                    username, // Display fetched username here
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 20,
+                                    ),
+                                  ),
+                                  SizedBox(height: 4.0),
+                                ],
+                              ),
+                            ],
+                          ),
                           SizedBox(height: 16.0),
-                          
                           SizedBox(height: 16.0),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -406,66 +403,6 @@ Widget _buildUploadsContent(BuildContext context, String username) {
                                       username,
                                       style: TextStyle(color: Colors.white),
                                     ),
-                                  ),
-                                  PopupMenuButton<String>(
-                                    icon: Icon(Icons.more_vert,
-                                        color: Colors.white),
-                                    onSelected: (value) async {
-                                      if (value == 'edit') {
-                                        await showModalBottomSheet(
-                                          context: context,
-                                          builder: (BuildContext context) {
-                                            TextEditingController
-                                                captionController =
-                                                TextEditingController(
-                                                    text: caption);
-
-                                            return Padding(
-                                              padding: EdgeInsets.all(16.0),
-                                              child: Column(
-                                                mainAxisSize: MainAxisSize.min,
-                                                children: [
-                                                  TextField(
-                                                    controller:
-                                                        captionController,
-                                                    decoration: InputDecoration(
-                                                      labelText: 'Edit Caption',
-                                                      filled: true,
-                                                      fillColor: Colors.white,
-                                                    ),
-                                                    maxLines: 3,
-                                                  ),
-                                                  SizedBox(height: 8),
-                                                  ElevatedButton(
-                                                    onPressed: () {
-                                                      _updatePost(
-                                                          context,
-                                                          postId,
-                                                          captionController
-                                                              .text);
-                                                      Navigator.pop(context);
-                                                    },
-                                                    child: Text('Save'),
-                                                  ),
-                                                ],
-                                              ),
-                                            );
-                                          },
-                                        );
-                                      } else if (value == 'delete') {
-                                        _deletePost(context, postId);
-                                      }
-                                    },
-                                    itemBuilder: (BuildContext context) => [
-                                      PopupMenuItem<String>(
-                                        value: 'edit',
-                                        child: Text('Edit Post'),
-                                      ),
-                                      PopupMenuItem<String>(
-                                        value: 'delete',
-                                        child: Text('Delete Post'),
-                                      ),
-                                    ],
                                   ),
                                 ],
                               ),
@@ -818,23 +755,6 @@ Widget _buildReviewsContent(String userId) {
                         ],
                       ),
                     ),
-                    PopupMenuButton<String>(
-                      onSelected: (value) {
-                        if (value == 'delete') {
-                          _deleteRating(docId);
-                        }
-                      },
-                      itemBuilder: (context) => [
-                        PopupMenuItem<String>(
-                          value: 'delete',
-                          child: Text('Delete'),
-                        ),
-                      ],
-                      icon: Icon(
-                        Icons.more_vert,
-                        color: Colors.white,
-                      ),
-                    ),
                   ],
                 ),
               ),
@@ -929,7 +849,9 @@ Widget _buildLibraryContent(
                   return Center(child: CircularProgressIndicator());
                 }
                 if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                  return Center(child: Text('No pins found'));
+                  return Center(
+                      child: Text('No pins found',
+                          style: TextStyle(color: Colors.white)));
                 }
 
                 final documents = snapshot.data!.docs;
@@ -1006,13 +928,13 @@ Widget _buildLibraryContent(
                   return Center(child: CircularProgressIndicator());
                 }
                 if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-    return Center(
-        child: Text(
-            'No lists found',
-            style: TextStyle(color: Colors.white),
-        ),
-    );
-}
+                  return Center(
+                    child: Text(
+                      'No lists found',
+                      style: TextStyle(color: Colors.white),
+                    ),
+                  );
+                }
 
                 final documents = snapshot.data!.docs;
 
@@ -1887,7 +1809,7 @@ Widget _buildLibraryContent(
                           return Column(
                             children: [
                               Text(
-                                "Let's plan out your trip!",
+                                "This list is empty.",
                                 style: TextStyle(
                                   color: Colors.white,
                                   fontSize: 24,
@@ -1895,53 +1817,6 @@ Widget _buildLibraryContent(
                                 ),
                               ),
                               SizedBox(height: 40.0),
-                              TextButton(
-                                onPressed: () {
-                                  try {
-                                    if (selectedListId != null &&
-                                        selectedListId!.isNotEmpty) {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) =>
-                                              _buildAddToListContent(
-                                            toggleAddToListContent,
-                                            selectedListId!,
-                                            context,
-                                          ),
-                                        ),
-                                      );
-                                    } else {
-                                      ScaffoldMessenger.of(context)
-                                          .showSnackBar(
-                                        SnackBar(
-                                            content: Text('No list selected')),
-                                      );
-                                    }
-                                  } catch (e) {
-                                    print('Error occurred: $e');
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                          content: Text('An error occurred')),
-                                    );
-                                  }
-                                },
-                                style: TextButton.styleFrom(
-                                  padding: EdgeInsets.symmetric(
-                                      vertical: 8.0, horizontal: 16.0),
-                                  backgroundColor:
-                                      Color.fromARGB(255, 132, 143, 200),
-                                  minimumSize: Size(200, 60),
-                                ),
-                                child: Text(
-                                  "Add to this list",
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
                             ],
                           );
                         } else {
@@ -2025,64 +1900,6 @@ Widget _buildLibraryContent(
                                                         ),
                                                       ),
                                                     ),
-                                            ),
-                                          ),
-                                          Positioned(
-                                            top: 8.0,
-                                            right: 8.0,
-                                            child: IconButton(
-                                              icon: Icon(
-                                                Icons.delete,
-                                                color: Colors.white,
-                                              ),
-                                              onPressed: () {
-                                                // Show confirmation dialog before deletion
-                                                showDialog(
-                                                  context: context,
-                                                  builder: (context) =>
-                                                      AlertDialog(
-                                                    title: Text(
-                                                        'Confirm Deletion'),
-                                                    content: Text(
-                                                        'Are you sure you want to delete this place?'),
-                                                    actions: [
-                                                      TextButton(
-                                                        onPressed: () {
-                                                          // Perform deletion
-                                                          FirebaseFirestore
-                                                              .instance
-                                                              .collection(
-                                                                  'list')
-                                                              .doc(
-                                                                  selectedListId)
-                                                              .collection(
-                                                                  'places')
-                                                              .doc(doc.id)
-                                                              .delete()
-                                                              .then((_) {
-                                                            Navigator.of(
-                                                                    context)
-                                                                .pop(); // Close dialog
-                                                          }).catchError(
-                                                                  (error) {
-                                                            // Handle error if needed
-                                                            print(
-                                                                'Failed to delete place: $error');
-                                                          });
-                                                        },
-                                                        child: Text('Delete'),
-                                                      ),
-                                                      TextButton(
-                                                        onPressed: () {
-                                                          Navigator.of(context)
-                                                              .pop(); // Close dialog
-                                                        },
-                                                        child: Text('Cancel'),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                );
-                                              },
                                             ),
                                           ),
                                         ],
@@ -3601,9 +3418,7 @@ Widget _buildSettingsContent(BuildContext context, VoidCallback toggleContent) {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Row(
-              
-            ),
+            Row(),
             Switch(
               value: false, // Default switch state
               onChanged: (value) {
@@ -3621,9 +3436,7 @@ Widget _buildSettingsContent(BuildContext context, VoidCallback toggleContent) {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Row(
-              
-            ),
+            Row(),
             GestureDetector(
               onTap: () {
                 // Handle Account tap if needed

@@ -23,6 +23,8 @@ Future<void> displayBottomSheet_profile(
   bool showEditListContent = false; // New state for Edit List content lol
   bool showSettingsContent = false;
 
+  final Function showOverlay;
+
   // Fetch user data from Firestore
   User? user = FirebaseAuth.instance.currentUser;
   if (user != null) {
@@ -3344,35 +3346,21 @@ Widget _buildLibraryContent(
                             ),
                             if (documents.isNotEmpty)
                               InkWell(
-                                onTap: () {
-                                  if (selectedListId != null &&
-                                      selectedListId!.isNotEmpty) {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) =>
-                                            _buildAddToListContent(
-                                                toggleAddToListContent,
-                                                selectedListId!,
-                                                context),
-                                      ),
-                                    );
-                                  }
-                                },
+                                onTap: () {},
                                 child: Container(
                                   width: 28.0,
                                   height: 28.0,
                                   decoration: BoxDecoration(
                                     shape: BoxShape.circle,
                                     border: Border.all(
-                                      color: Colors.white,
+                                      color: Colors.transparent,
                                       width: 1.5,
                                     ),
                                   ),
                                   child: Center(
                                     child: Icon(
                                       Icons.add,
-                                      color: Colors.white,
+                                      color: Colors.transparent,
                                       size: 16.0,
                                     ),
                                   ),
@@ -3404,7 +3392,7 @@ Widget _buildLibraryContent(
                           return Column(
                             children: [
                               Text(
-                                "Let's plan out your trip!",
+                                "This list is empty.",
                                 style: TextStyle(
                                   color: Colors.white,
                                   fontSize: 24,
@@ -3412,53 +3400,6 @@ Widget _buildLibraryContent(
                                 ),
                               ),
                               SizedBox(height: 40.0),
-                              TextButton(
-                                onPressed: () {
-                                  try {
-                                    if (selectedListId != null &&
-                                        selectedListId!.isNotEmpty) {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) =>
-                                              _buildAddToListContent(
-                                            toggleAddToListContent,
-                                            selectedListId!,
-                                            context,
-                                          ),
-                                        ),
-                                      );
-                                    } else {
-                                      ScaffoldMessenger.of(context)
-                                          .showSnackBar(
-                                        SnackBar(
-                                            content: Text('No list selected')),
-                                      );
-                                    }
-                                  } catch (e) {
-                                    print('Error occurred: $e');
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                          content: Text('An error occurred')),
-                                    );
-                                  }
-                                },
-                                style: TextButton.styleFrom(
-                                  padding: EdgeInsets.symmetric(
-                                      vertical: 8.0, horizontal: 16.0),
-                                  backgroundColor:
-                                      Color.fromARGB(255, 132, 143, 200),
-                                  minimumSize: Size(200, 60),
-                                ),
-                                child: Text(
-                                  "Add to this list",
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
                             ],
                           );
                         } else {
@@ -3535,64 +3476,6 @@ Widget _buildLibraryContent(
                                                         ),
                                                       ),
                                                     ),
-                                            ),
-                                          ),
-                                          Positioned(
-                                            top: 8.0,
-                                            right: 8.0,
-                                            child: IconButton(
-                                              icon: Icon(
-                                                Icons.delete,
-                                                color: Colors.white,
-                                              ),
-                                              onPressed: () {
-                                                // Show confirmation dialog before deletion
-                                                showDialog(
-                                                  context: context,
-                                                  builder: (context) =>
-                                                      AlertDialog(
-                                                    title: Text(
-                                                        'Confirm Deletion'),
-                                                    content: Text(
-                                                        'Are you sure you want to delete this place?'),
-                                                    actions: [
-                                                      TextButton(
-                                                        onPressed: () {
-                                                          // Perform deletion
-                                                          FirebaseFirestore
-                                                              .instance
-                                                              .collection(
-                                                                  'list')
-                                                              .doc(
-                                                                  selectedListId)
-                                                              .collection(
-                                                                  'places')
-                                                              .doc(doc.id)
-                                                              .delete()
-                                                              .then((_) {
-                                                            Navigator.of(
-                                                                    context)
-                                                                .pop(); // Close dialog
-                                                          }).catchError(
-                                                                  (error) {
-                                                            // Handle error if needed
-                                                            print(
-                                                                'Failed to delete place: $error');
-                                                          });
-                                                        },
-                                                        child: Text('Delete'),
-                                                      ),
-                                                      TextButton(
-                                                        onPressed: () {
-                                                          Navigator.of(context)
-                                                              .pop(); // Close dialog
-                                                        },
-                                                        child: Text('Cancel'),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                );
-                                              },
                                             ),
                                           ),
                                         ],
@@ -4489,37 +4372,356 @@ class _SearchTextFieldState extends State<SearchTextField> {
     }
   }
 
+  void _showSearchOverlay() {
+    OverlayState? overlayState = Overlay.of(context); // Get the overlay state
+    OverlayEntry? overlayEntry;
+
+    // Create the overlay entry
+    overlayEntry = OverlayEntry(
+      builder: (context) => Positioned.fill(
+        child: GestureDetector(
+          onTap: () {
+            // Dismiss the overlay if tapped outside
+          },
+          child: Material(
+            color: Colors.black
+                .withOpacity(0.5), // Semi-transparent overlay background
+            child: Stack(
+              children: [
+                // Content of the overlay
+                Positioned.fill(
+                  child: Center(
+                    child: Container(
+                      width: MediaQuery.of(context)
+                          .size
+                          .width, // Full screen width
+                      padding: const EdgeInsets.all(12.0),
+                      decoration: BoxDecoration(
+                        color:
+                            Color.fromARGB(255, 22, 23, 43), // Background color
+                        borderRadius: BorderRadius
+                            .zero, // No border radius for full screen
+                      ),
+                      child: Column(
+                        children: [
+                          SizedBox(height: 25.0),
+                          Text(
+                            "Add to this list",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          // Search TextField moved down
+                          SizedBox(
+                              height: 80.0), // Adds space before the TextField
+                          TextField(
+                            controller: widget.controller,
+                            onChanged: (query) {
+                              _searchPlaces(query);
+                            },
+                            style: TextStyle(color: Colors.white),
+                            decoration: InputDecoration(
+                              filled: true,
+                              fillColor: Colors.transparent,
+                              hintText: 'Search',
+                              hintStyle: TextStyle(color: Colors.white70),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8.0),
+                                borderSide: BorderSide(color: Colors.white),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8.0),
+                                borderSide: BorderSide(color: Colors.white),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8.0),
+                                borderSide: BorderSide(color: Colors.white),
+                              ),
+                              prefixIcon:
+                                  Icon(Icons.search, color: Colors.white),
+                            ),
+                          ),
+                          // Add space between the SearchTextField and the related searches container
+                          SizedBox(
+                              height:
+                                  48.0), // Adjust this value for desired spacing
+                          _isLoading
+                              ? Center(
+                                  child: CircularProgressIndicator(
+                                      color: Colors.white))
+                              : Container(
+                                  height: 550.0,
+                                  padding: const EdgeInsets.all(12.0),
+                                  decoration: BoxDecoration(
+                                    border: Border.all(color: Colors.white),
+                                    borderRadius: BorderRadius.circular(8.0),
+                                    color: Color.fromARGB(255, 22, 23, 43),
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Related Searches',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 32,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      SizedBox(height: 8.0),
+                                      _isLoading
+                                          ? Center(
+                                              child: CircularProgressIndicator(
+                                                  color: Colors.white))
+                                          : Expanded(
+                                              child: Builder(
+                                                builder: (context) {
+                                                  return ListView.builder(
+                                                    itemCount:
+                                                        _suggestions.length,
+                                                    itemBuilder:
+                                                        (context, index) {
+                                                      final suggestion =
+                                                          _suggestions[index];
+                                                      return Container(
+                                                        margin: const EdgeInsets
+                                                            .only(bottom: 8.0),
+                                                        child: Stack(
+                                                          children: [
+                                                            SizedBox(
+                                                              width: double
+                                                                  .infinity,
+                                                              height: 100.0,
+                                                              child: suggestion[
+                                                                          'imageUrl'] !=
+                                                                      null
+                                                                  ? Image
+                                                                      .network(
+                                                                      suggestion[
+                                                                          'imageUrl'],
+                                                                      fit: BoxFit
+                                                                          .cover,
+                                                                      errorBuilder: (context,
+                                                                          error,
+                                                                          stackTrace) {
+                                                                        return Center(
+                                                                            child:
+                                                                                Text('No Image', style: TextStyle(fontSize: 16)));
+                                                                      },
+                                                                    )
+                                                                  : Center(
+                                                                      child: Text(
+                                                                          'No Image',
+                                                                          style:
+                                                                              TextStyle(fontSize: 16))),
+                                                            ),
+                                                            Positioned(
+                                                              left: 0.0,
+                                                              bottom: 0.0,
+                                                              right: 0,
+                                                              child: Container(
+                                                                color: Colors
+                                                                    .black
+                                                                    .withOpacity(
+                                                                        0.5),
+                                                                padding:
+                                                                    const EdgeInsets
+                                                                        .all(
+                                                                        8.0),
+                                                                child: Row(
+                                                                  children: [
+                                                                    Expanded(
+                                                                      child:
+                                                                          Text(
+                                                                        suggestion['name'] ??
+                                                                            'No Name',
+                                                                        style:
+                                                                            TextStyle(
+                                                                          color:
+                                                                              Colors.white,
+                                                                          fontSize:
+                                                                              16.0,
+                                                                          fontWeight:
+                                                                              FontWeight.bold,
+                                                                        ),
+                                                                        overflow:
+                                                                            TextOverflow.ellipsis,
+                                                                      ),
+                                                                    ),
+                                                                    IconButton(
+                                                                      icon: Icon(
+                                                                          Icons
+                                                                              .add,
+                                                                          color:
+                                                                              Colors.white),
+                                                                      onPressed:
+                                                                          () {
+                                                                        widget.onAddPlace(
+                                                                            suggestion); // Use callback to add the place
+                                                                        ScaffoldMessenger.of(context)
+                                                                            .showSnackBar(
+                                                                          SnackBar(
+                                                                            content:
+                                                                                Text('Place added!'),
+                                                                            duration:
+                                                                                Duration(seconds: 2),
+                                                                          ),
+                                                                        );
+
+                                                                        // Create the overlay entry for the "Place added!" message
+                                                                        OverlayState?
+                                                                            overlayState =
+                                                                            Overlay.of(context);
+                                                                        OverlayEntry?
+                                                                            overlayEntry;
+
+                                                                        overlayEntry =
+                                                                            OverlayEntry(
+                                                                          builder: (context) =>
+                                                                              Positioned.fill(
+                                                                            child:
+                                                                                GestureDetector(
+                                                                              onTap: () {
+                                                                                // Dismiss the overlay when tapped outside
+                                                                                overlayEntry?.remove();
+                                                                              },
+                                                                              child: Material(
+                                                                                color: Colors.black.withOpacity(0.5), // Semi-transparent overlay background
+                                                                                child: Stack(
+                                                                                  children: [
+                                                                                    // Centered "Place added!" message
+                                                                                    Positioned.fill(
+                                                                                      child: Center(
+                                                                                        child: Container(
+                                                                                          width: MediaQuery.of(context).size.width * 0.7, // Message container width
+                                                                                          padding: const EdgeInsets.all(16.0),
+                                                                                          decoration: BoxDecoration(
+                                                                                            color: Color.fromARGB(255, 22, 23, 43), // Background color
+                                                                                            borderRadius: BorderRadius.circular(8.0), // Rounded corners
+                                                                                          ),
+                                                                                          child: Column(
+                                                                                            mainAxisSize: MainAxisSize.min,
+                                                                                            children: [
+                                                                                              Text(
+                                                                                                "Place added!",
+                                                                                                style: TextStyle(
+                                                                                                  color: Colors.white,
+                                                                                                  fontSize: 20,
+                                                                                                  fontWeight: FontWeight.bold,
+                                                                                                ),
+                                                                                              ),
+                                                                                              SizedBox(height: 20),
+                                                                                              TextButton(
+                                                                                                onPressed: () {
+                                                                                                  overlayEntry?.remove(); // Remove the overlay when OK is pressed
+                                                                                                },
+                                                                                                child: Text(
+                                                                                                  "OK",
+                                                                                                  style: TextStyle(color: Colors.white),
+                                                                                                ),
+                                                                                              ),
+                                                                                            ],
+                                                                                          ),
+                                                                                        ),
+                                                                                      ),
+                                                                                    ),
+                                                                                  ],
+                                                                                ),
+                                                                              ),
+                                                                            ),
+                                                                          ),
+                                                                        );
+
+                                                                        // Insert the overlay entry into the overlay
+                                                                        overlayState
+                                                                            ?.insert(overlayEntry);
+
+                                                                        // Optionally, you can remove the overlay after a set duration
+                                                                        Future.delayed(
+                                                                            Duration(seconds: 2),
+                                                                            () {
+                                                                          overlayEntry
+                                                                              ?.remove();
+                                                                        });
+                                                                      },
+                                                                    ),
+                                                                  ],
+                                                                ),
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      );
+                                                    },
+                                                  );
+                                                },
+                                              ),
+                                            ),
+                                    ],
+                                  ),
+                                ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                // Back button at the bottom-left of the overlay
+                Positioned(
+                  top:
+                      20.0, // Adjust this value to control the vertical position (move it lower)
+                  left: 16.0,
+                  child: IconButton(
+                    icon: Icon(Icons.arrow_back, color: Colors.white),
+                    onPressed: () {
+                      overlayEntry?.remove();
+                      Navigator.pop(context);
+                      // Close the overlay when tapped
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+
+    // Insert the overlay entry
+    overlayState.insert(overlayEntry);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16.0),
+      margin: const EdgeInsets.symmetric(horizontal: 10.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          TextField(
-            controller: widget.controller,
-            onChanged: (query) {
-              _searchPlaces(query);
+          GestureDetector(
+            onTap: () {
+              // Action to be performed on tap (e.g., show a dialog)
+              _showSearchOverlay();
             },
-            style: TextStyle(color: Colors.white),
-            decoration: InputDecoration(
-              filled: true,
-              fillColor: Colors.transparent,
-              hintText: 'Search',
-              hintStyle: TextStyle(color: Colors.white70),
-              border: OutlineInputBorder(
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
+              decoration: BoxDecoration(
+                color: Colors.transparent,
                 borderRadius: BorderRadius.circular(8.0),
-                borderSide: BorderSide(color: Colors.white),
+                border: Border.all(color: Colors.white),
               ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8.0),
-                borderSide: BorderSide(color: Colors.white),
+              child: Row(
+                children: [
+                  Icon(Icons.search, color: Colors.white),
+                  SizedBox(width: 8.0),
+                  Text(
+                    'Search',
+                    style: TextStyle(color: Colors.white70),
+                  ),
+                ],
               ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8.0),
-                borderSide: BorderSide(color: Colors.white),
-              ),
-              prefixIcon: Icon(Icons.search, color: Colors.white),
             ),
           ),
           SizedBox(height: 48.0),
