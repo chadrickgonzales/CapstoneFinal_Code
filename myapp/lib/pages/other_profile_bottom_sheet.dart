@@ -516,36 +516,9 @@ Widget _buildUploadsContent(BuildContext context, String username) {
                               if (comments.isNotEmpty)
                                 Column(
                                   children: comments.map<Widget>((comment) {
-                                    return FutureBuilder<DocumentSnapshot>(
-                                      future: FirebaseFirestore.instance
-                                          .collection('users')
-                                          .doc(comment['userId'])
-                                          .get(),
-                                      builder: (context, snapshot) {
-                                        if (snapshot.connectionState ==
-                                            ConnectionState.waiting) {
-                                          return CircularProgressIndicator();
-                                        }
-                                        if (!snapshot.hasData ||
-                                            snapshot.hasError) {
-                                          return Text('Unknown User',
-                                              style: TextStyle(
-                                                  color: Colors.grey));
-                                        }
-                                        var userDoc = snapshot.data!.data()
-                                            as Map<String, dynamic>;
-                                        var commenterUsername =
-                                            userDoc['username'] ??
-                                                'Unknown User';
-                                        return ListTile(
-                                          title: Text(commenterUsername,
-                                              style: TextStyle(
-                                                  color: Colors.white)),
-                                          subtitle: Text(comment['text'],
-                                              style: TextStyle(
-                                                  color: Colors.grey)),
-                                        );
-                                      },
+                                    return ListTile(
+                                      title: Text(comment['username']),
+                                      subtitle: Text(comment['text']),
                                     );
                                   }).toList(),
                                 ),
@@ -559,7 +532,11 @@ Widget _buildUploadsContent(BuildContext context, String username) {
               );
             }
 
-            return Center(child: Text('No posts available.'));
+            return Center(
+                child: Text(
+              'No posts available.',
+              style: TextStyle(color: Colors.white),
+            ));
           },
         ),
       ],
@@ -568,54 +545,44 @@ Widget _buildUploadsContent(BuildContext context, String username) {
 }
 
 void _showCommentDialog(BuildContext context, String postId) {
-  TextEditingController commentController = TextEditingController();
+  TextEditingController _commentController = TextEditingController();
 
   showDialog(
     context: context,
     builder: (BuildContext context) {
       return AlertDialog(
-        title: Text('Add Comment'),
+        title: Text('Add a Comment'),
         content: TextField(
-          controller: commentController,
-          decoration: InputDecoration(
-            hintText: 'Write your comment...',
-            filled: true,
-            fillColor: Colors.grey[200],
-          ),
-          maxLines: 3,
+          controller: _commentController,
+          decoration: InputDecoration(hintText: 'Write your comment...'),
         ),
         actions: [
           TextButton(
             onPressed: () {
-              Navigator.pop(context);
+              Navigator.of(context).pop();
             },
             child: Text('Cancel'),
           ),
-          ElevatedButton(
+          TextButton(
             onPressed: () async {
-              String commentText = commentController.text.trim();
-              if (commentText.isNotEmpty) {
-                User? user = FirebaseAuth.instance.currentUser;
-
-                if (user != null) {
-                  await FirebaseFirestore.instance
-                      .collection('post')
-                      .doc(postId)
-                      .update({
-                    'comments': FieldValue.arrayUnion([
-                      {
-                        'userId': user.uid,
-                        'text': commentText,
-                        'timestamp': FieldValue.serverTimestamp(),
-                      }
-                    ])
-                  });
-                }
+              if (_commentController.text.isNotEmpty) {
+                await FirebaseFirestore.instance
+                    .collection('post')
+                    .doc(postId)
+                    .update({
+                  'comments': FieldValue.arrayUnion([
+                    {
+                      'username':
+                          FirebaseAuth.instance.currentUser?.displayName ??
+                              'Unknown',
+                      'text': _commentController.text,
+                    }
+                  ])
+                });
+                Navigator.of(context).pop();
               }
-
-              Navigator.pop(context); // Close the dialog after saving
             },
-            child: Text('Post'),
+            child: Text('Post Comment'),
           ),
         ],
       );
