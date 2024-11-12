@@ -375,6 +375,21 @@ class _AdminPanelState extends State<AdminPanel> {
             TextButton(
               onPressed: () {
                 setState(() {
+                  selectedSection = 'Reported Posts';
+                });
+              },
+              child: const Text(
+                'Reported Posts',
+                style: TextStyle(
+                    fontSize: 24,
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold), // Bigger text
+              ),
+            ),
+            const SizedBox(height: 20),
+            TextButton(
+              onPressed: () {
+                setState(() {
                   selectedSection =
                       'Deleted Posts'; // Navigate to Deleted Posts
                 });
@@ -428,6 +443,39 @@ class _AdminPanelState extends State<AdminPanel> {
             const SizedBox(height: 20),
             Expanded(
               child: _buildAlternateContent(context, () {
+                setState(() {
+                  selectedSection =
+                      'Content Management'; // Return to content management
+                });
+              }),
+            ),
+            const SizedBox(height: 20),
+            TextButton(
+              onPressed: () {
+                setState(() {
+                  selectedSection = 'Content Management';
+                });
+              },
+              child: const Text(
+                'Go Back',
+                style: TextStyle(
+                    fontSize: 24,
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold),
+              ),
+            ),
+          ] else if (selectedSection == 'Reported Posts') ...[
+            const Text(
+              'Reported Posts',
+              style: TextStyle(
+                fontSize: 24,
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 20),
+            Expanded(
+              child: _buildReportedPostsContent(context, () {
                 setState(() {
                   selectedSection =
                       'Content Management'; // Return to content management
@@ -1419,42 +1467,42 @@ Widget _buildDeletedPostsContent(
                                       ],
                                     ),
                                     IconButton(
-                                      icon: Icon(Icons.restore,
-                                          color: Colors.green), // Restore icon
-                                      onPressed: () {
-                                        showDialog(
-                                          context: context,
-                                          builder: (BuildContext context) {
-                                            return AlertDialog(
-                                              title: Text('Restore Post'),
-                                              content: Text(
-                                                  'Are you sure you want to restore this post?'),
-                                              actions: [
-                                                TextButton(
-                                                  child: Text('No'),
-                                                  onPressed: () {
-                                                    Navigator.of(context).pop();
-                                                  },
-                                                ),
-                                                TextButton(
-                                                  child: Text('Yes'),
-                                                  onPressed: () async {
-                                                    await FirebaseFirestore
-                                                        .instance
-                                                        .collection('post')
-                                                        .doc(postId)
-                                                        .update({
-                                                      'isDeleted': false
-                                                    });
-                                                    Navigator.of(context).pop();
-                                                  },
-                                                ),
-                                              ],
-                                            );
-                                          },
-                                        );
-                                      },
-                                    ),
+  icon: Icon(Icons.restore, color: Colors.green), // Restore icon
+  onPressed: () {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Restore Post'),
+          content: Text('Are you sure you want to restore this post?'),
+          actions: [
+            TextButton(
+              child: Text('No'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: Text('Yes'),
+              onPressed: () async {
+                // Restore post by updating 'isDeleted' to false
+                await FirebaseFirestore.instance
+                    .collection('post')
+                    .doc(postId)
+                    .update({'isDeleted': false, 'Restored': true});
+                    
+
+                // Delete the post from the 'report' collection
+              
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  },
+),
                                   ],
                                 ),
                                 SizedBox(height: 8),
@@ -1607,5 +1655,209 @@ Widget _buildDeletedPostsContent(
         },
       ),
     ],
+  );
+}
+
+
+Widget _buildReportedPostsContent(BuildContext context, VoidCallback toggleContent) {
+  return FutureBuilder<QuerySnapshot>(
+    future: FirebaseFirestore.instance.collection('report').get(),
+    builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> reportSnapshot) {
+      if (reportSnapshot.connectionState == ConnectionState.waiting) {
+        return Center(child: CircularProgressIndicator());
+      }
+
+      if (reportSnapshot.hasError) {
+        return Center(child: Text('Error: ${reportSnapshot.error}'));
+      }
+
+      if (reportSnapshot.hasData && reportSnapshot.data!.docs.isNotEmpty) {
+        // Extract postIds from the 'report' collection
+        List<String> reportedPostIds = reportSnapshot.data!.docs
+            .map((doc) => doc['postId'] as String)
+            .toList();
+
+        return StreamBuilder<QuerySnapshot>(
+          stream: FirebaseFirestore.instance
+              .collection('post')
+              .where(FieldPath.documentId, whereIn: reportedPostIds)
+              .where('isDeleted', isEqualTo: false) // Only show non-deleted posts
+              .where('Restored', isEqualTo: false)
+              .snapshots(),
+          builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> postSnapshot) {
+            if (postSnapshot.connectionState == ConnectionState.waiting) {
+              return Center(child: CircularProgressIndicator());
+            }
+
+            if (postSnapshot.hasError) {
+              return Center(child: Text('Error: ${postSnapshot.error}'));
+            }
+
+            if (postSnapshot.hasData && postSnapshot.data!.docs.isNotEmpty) {
+              return ListView.builder(
+                itemCount: postSnapshot.data!.docs.length,
+                itemBuilder: (BuildContext context, int index) {
+                  var post = postSnapshot.data!.docs[index].data() as Map<String, dynamic>;
+                  var postId = postSnapshot.data!.docs[index].id;
+                  var username = post['username'] ?? 'Unknown';
+                  var imageUrl = post['imageUrl'];
+                  var caption = post['caption'] ?? 'No Caption';
+                  int likes = post['likes'] ?? 0;
+                  List<dynamic> likedBy = post['likedBy'] ?? [];
+                  List<dynamic> comments = post['comments'] ?? [];
+
+                  return Container(
+                    margin: EdgeInsets.symmetric(vertical: 8.0),
+                    padding: EdgeInsets.all(8.0),
+                    decoration: BoxDecoration(
+                      color: Color.fromARGB(255, 80, 96, 116),
+                      borderRadius: BorderRadius.circular(10.0),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Row(
+                              children: [
+                                CircleAvatar(
+                                  backgroundColor: Colors.white,
+                                  radius: 16,
+                                  child: Icon(Icons.person, color: Colors.grey),
+                                ),
+                                SizedBox(width: 8),
+                                Text(username, style: TextStyle(color: Colors.white)),
+                              ],
+                            ),
+                            IconButton(
+                                        icon: Icon(Icons.delete,
+                                            color: Colors.red),
+                                        onPressed: () {
+                                          showDialog(
+                                            context: context,
+                                            builder: (BuildContext context) {
+                                              return AlertDialog(
+                                                title: Text('Delete Post'),
+                                                content: Text(
+                                                    'Are you sure you want to delete this post?'),
+                                                actions: [
+                                                  TextButton(
+                                                    child: Text('No'),
+                                                    onPressed: () {
+                                                      Navigator.of(context)
+                                                          .pop();
+                                                    },
+                                                  ),
+                                                  TextButton(
+                                                    child: Text('Yes'),
+                                                    onPressed: () async {
+                                                      await FirebaseFirestore
+                                                          .instance
+                                                          .collection('post')
+                                                          .doc(postId)
+                                                          .update({
+                                                        'isDeleted': true
+                                                      });
+                                                      Navigator.of(context)
+                                                          .pop();
+                                                    },
+                                                  ),
+                                                ],
+                                              );
+                                            },
+                                          );
+                                        },
+                                      ),
+                          ],
+                        ),
+                        
+                        SizedBox(height: 8),
+                        Text(
+                          caption,
+                          style: TextStyle(color: Colors.white),
+                        ),
+                        SizedBox(height: 8),
+                        imageUrl != null
+                            ? Container(
+                                height: 200,
+                                color: Colors.grey,
+                                child: Image.network(
+                                  imageUrl,
+                                  fit: BoxFit.cover,
+                                  width: double.infinity,
+                                ),
+                              )
+                            : Container(
+                                height: 200,
+                                color: Colors.grey,
+                                child: Center(
+                                  child: Text('No Image', style: TextStyle(color: Colors.white)),
+                                ),
+                              ),
+                        SizedBox(height: 8),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          children: [
+                            InkWell(
+                              onTap: () async {
+                                User? user = FirebaseAuth.instance.currentUser;
+                                if (user != null) {
+                                  if (!likedBy.contains(user.uid)) {
+                                    await FirebaseFirestore.instance
+                                        .collection('post')
+                                        .doc(postId)
+                                        .update({
+                                      'likes': FieldValue.increment(1),
+                                      'likedBy': FieldValue.arrayUnion([user.uid])
+                                    });
+                                  } else {
+                                    await FirebaseFirestore.instance
+                                        .collection('post')
+                                        .doc(postId)
+                                        .update({
+                                      'likes': FieldValue.increment(-1),
+                                      'likedBy': FieldValue.arrayRemove([user.uid])
+                                    });
+                                  }
+                                }
+                              },
+                              child: Row(
+                                children: [
+                                  Icon(Icons.thumb_up,
+                                      color: likedBy.contains(FirebaseAuth.instance.currentUser?.uid)
+                                          ? Colors.blue
+                                          : Colors.white),
+                                  SizedBox(width: 4),
+                                  Text('$likes Like${likes == 1 ? '' : 's'}',
+                                      style: TextStyle(color: Colors.white)),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        if (comments.isNotEmpty)
+                          Column(
+                            children: comments.map<Widget>((comment) {
+                              return ListTile(
+                                title: Text(comment['username']),
+                                subtitle: Text(comment['text']),
+                              );
+                            }).toList(),
+                          ),
+                      ],
+                    ),
+                  );
+                },
+              );
+            }
+
+            return Center(child: Text('No reported posts found.'));
+          },
+        );
+      }
+
+      return Center(child: Text('No reports found.'));
+    },
   );
 }

@@ -199,7 +199,8 @@ Widget _buildMainContent(
                               selectedLocation!.longitude)
                           : null,
                       'timestamp': Timestamp.now(),
-                      'isDeleted': false
+                      'isDeleted': false,
+                      'Restored':false
                     };
 
                     // Debugging: Print postData to ensure it's correct
@@ -533,194 +534,228 @@ class PostItem extends StatefulWidget {
 class _PostItemState extends State<PostItem> {
   bool isExpanded = false;
 
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: EdgeInsets.symmetric(vertical: 8.0),
-      padding: EdgeInsets.all(8.0),
-      decoration: BoxDecoration(
-        color: Color.fromARGB(255, 80, 96, 116),
-        borderRadius: BorderRadius.circular(10.0),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          InkWell(
-            onTap: () async {
-              // Call the function to open the bottom sheet
-              GoogleMapController? mapController;
-              Set<Marker> markers = {};
-              Set<Polyline> polylines = {};
-              List<LatLng> routePoints = [];
-              String userId =
-                  widget.username; // Assuming userId is part of the post data
+@override
+Widget build(BuildContext context) {
+  return Container(
+    margin: EdgeInsets.symmetric(vertical: 8.0),
+    padding: EdgeInsets.all(8.0),
+    decoration: BoxDecoration(
+      color: Color.fromARGB(255, 80, 96, 116),
+      borderRadius: BorderRadius.circular(10.0),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            InkWell(
+              onTap: () async {
+                // Call the function to open the bottom sheet
+                GoogleMapController? mapController;
+                Set<Marker> markers = {};
+                Set<Polyline> polylines = {};
+                List<LatLng> routePoints = [];
+                String userId = widget.username;
 
-              await displayBottomSheet_otherprofile(
-                context,
-                mapController,
-                markers,
-                polylines,
-                routePoints,
-                userId,
-              );
-            },
-            child: Row(
-              children: [
-                CircleAvatar(
-                  backgroundColor: Colors.white,
-                  radius: 16,
-                  child: Icon(
-                    Icons.person,
-                    color: Colors.grey,
-                  ),
-                ),
-                SizedBox(width: 8),
-                Text(
-                  widget.username,
-                  style: TextStyle(color: Colors.white),
-                ),
-              ],
-            ),
-          ),
-          SizedBox(height: 8),
-          isExpanded
-              ? Column(
-                  children: [
-                    Text(
-                      widget.caption,
-                      style: TextStyle(color: Colors.white),
+                await displayBottomSheet_otherprofile(
+                  context,
+                  mapController,
+                  markers,
+                  polylines,
+                  routePoints,
+                  userId,
+                );
+              },
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    backgroundColor: Colors.white,
+                    radius: 16,
+                    child: Icon(
+                      Icons.person,
+                      color: Colors.grey,
                     ),
+                  ),
+                  SizedBox(width: 8),
+                  Text(
+                    widget.username,
+                    style: TextStyle(color: Colors.white),
+                  ),
+                ],
+              ),
+            ),
+           PopupMenuButton<String>(
+  icon: Icon(Icons.more_vert, color: Colors.white),
+  onSelected: (String value) async {
+    if (value == 'Report') {
+      await FirebaseFirestore.instance.collection('report').add({
+        'postId': widget.postId,
+        'reportedBy': FirebaseAuth.instance.currentUser?.uid,
+        'timestamp': FieldValue.serverTimestamp(),
+        'Restored': false,
+      });
+
+      await FirebaseFirestore.instance
+          .collection('post')
+          .doc(widget.postId) // Use widget.postId here
+          .update({'Restored': false});
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Content reported successfully')),
+      );
+    }
+  },
+  itemBuilder: (BuildContext context) {
+    return [
+      PopupMenuItem<String>(
+        value: 'Report',
+        child: Text('Report'),
+      ),
+    ];
+  },
+),
+          ],
+        ),
+        SizedBox(height: 8),
+        isExpanded
+            ? Column(
+                children: [
+                  Text(
+                    widget.caption,
+                    style: TextStyle(color: Colors.white),
+                  ),
+                  InkWell(
+                    onTap: () {
+                      setState(() {
+                        isExpanded = false;
+                      });
+                    },
+                    child: Text(
+                      'Show less',
+                      style: TextStyle(color: Colors.blue),
+                    ),
+                  ),
+                ],
+              )
+            : Column(
+                children: [
+                  Text(
+                    widget.caption.length > 100
+                        ? '${widget.caption.substring(0, 100)}...'
+                        : widget.caption,
+                    style: TextStyle(color: Colors.white),
+                  ),
+                  if (widget.caption.length > 100)
                     InkWell(
                       onTap: () {
                         setState(() {
-                          isExpanded = false;
+                          isExpanded = true;
                         });
                       },
                       child: Text(
-                        'Show less',
+                        'Show more',
                         style: TextStyle(color: Colors.blue),
                       ),
                     ),
-                  ],
-                )
-              : Column(
-                  children: [
-                    Text(
-                      widget.caption.length > 100
-                          ? '${widget.caption.substring(0, 100)}...'
-                          : widget.caption,
-                      style: TextStyle(color: Colors.white),
-                    ),
-                    if (widget.caption.length > 100)
-                      InkWell(
-                        onTap: () {
-                          setState(() {
-                            isExpanded = true;
-                          });
-                        },
-                        child: Text(
-                          'Show more',
-                          style: TextStyle(color: Colors.blue),
-                        ),
-                      ),
-                  ],
+                ],
+              ),
+        SizedBox(height: 8),
+        widget.imageUrl != null
+            ? Container(
+                height: 200,
+                color: Colors.grey,
+                child: Image.network(
+                  widget.imageUrl!,
+                  fit: BoxFit.cover,
+                  width: double.infinity,
                 ),
-          SizedBox(height: 8),
-          widget.imageUrl != null
-              ? Container(
-                  height: 200,
-                  color: Colors.grey,
-                  child: Image.network(
-                    widget.imageUrl!,
-                    fit: BoxFit.cover,
-                    width: double.infinity,
-                  ),
-                )
-              : Container(
-                  height: 200,
-                  color: Colors.grey,
-                  child: Center(
-                    child: Text(
-                      'No Image',
-                      style: TextStyle(color: Colors.white),
-                    ),
+              )
+            : Container(
+                height: 200,
+                color: Colors.grey,
+                child: Center(
+                  child: Text(
+                    'No Image',
+                    style: TextStyle(color: Colors.white),
                   ),
                 ),
-          SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              InkWell(
-                onTap: () async {
-                  // Fetch current user
-                  User? user = FirebaseAuth.instance.currentUser;
-                  if (user != null) {
-                    // Check if the user has already liked the post
-                    if (!widget.likedBy.contains(user.uid)) {
-                      // Increment likes and add user to likedBy list
-                      await FirebaseFirestore.instance
-                          .collection('post')
-                          .doc(widget.postId)
-                          .update({
-                        'likes': FieldValue.increment(1),
-                        'likedBy': FieldValue.arrayUnion([user.uid])
-                      });
-                    } else {
-                      // User already liked the post, remove like
-                      await FirebaseFirestore.instance
-                          .collection('post')
-                          .doc(widget.postId)
-                          .update({
-                        'likes': FieldValue.increment(-1),
-                        'likedBy': FieldValue.arrayRemove([user.uid])
-                      });
-                    }
+              ),
+        SizedBox(height: 8),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            InkWell(
+              onTap: () async {
+                // Fetch current user
+                User? user = FirebaseAuth.instance.currentUser;
+                if (user != null) {
+                  // Check if the user has already liked the post
+                  if (!widget.likedBy.contains(user.uid)) {
+                    // Increment likes and add user to likedBy list
+                    await FirebaseFirestore.instance
+                        .collection('post')
+                        .doc(widget.postId)
+                        .update({
+                      'likes': FieldValue.increment(1),
+                      'likedBy': FieldValue.arrayUnion([user.uid])
+                    });
+                  } else {
+                    // User already liked the post, remove like
+                    await FirebaseFirestore.instance
+                        .collection('post')
+                        .doc(widget.postId)
+                        .update({
+                      'likes': FieldValue.increment(-1),
+                      'likedBy': FieldValue.arrayRemove([user.uid])
+                    });
                   }
-                },
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.thumb_up,
-                      color: widget.likedBy
-                              .contains(FirebaseAuth.instance.currentUser?.uid)
-                          ? Colors.blue
-                          : Colors.white,
-                    ),
-                    SizedBox(width: 4),
-                    Text(
-                      '${widget.likes} Like${widget.likes == 1 ? '' : 's'}',
-                      style: TextStyle(color: Colors.white),
-                    ),
-                  ],
-                ),
+                }
+              },
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.thumb_up,
+                    color: widget.likedBy
+                            .contains(FirebaseAuth.instance.currentUser?.uid)
+                        ? Colors.blue
+                        : Colors.white,
+                  ),
+                  SizedBox(width: 4),
+                  Text(
+                    '${widget.likes} Like${widget.likes == 1 ? '' : 's'}',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                ],
               ),
-              InkWell(
-                onTap: () {
-                  _showCommentDialog(context, widget.postId);
-                },
-                child: Row(
-                  children: [
-                    Icon(Icons.comment, color: Colors.white),
-                    SizedBox(width: 4),
-                    Text('Comment', style: TextStyle(color: Colors.white)),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          if (widget.comments.isNotEmpty)
-            Column(
-              children: widget.comments.map<Widget>((comment) {
-                return ListTile(
-                  title: Text(comment['username']),
-                  subtitle: Text(comment['text']),
-                );
-              }).toList(),
             ),
-        ],
-      ),
-    );
-  }
+            InkWell(
+              onTap: () {
+                _showCommentDialog(context, widget.postId);
+              },
+              child: Row(
+                children: [
+                  Icon(Icons.comment, color: Colors.white),
+                  SizedBox(width: 4),
+                  Text('Comment', style: TextStyle(color: Colors.white)),
+                ],
+              ),
+            ),
+          ],
+        ),
+        if (widget.comments.isNotEmpty)
+          Column(
+            children: widget.comments.map<Widget>((comment) {
+              return ListTile(
+                title: Text(comment['username']),
+                subtitle: Text(comment['text']),
+              );
+            }).toList(),
+          ),
+      ],
+    ),
+  );
+}
 
   void _showCommentDialog(BuildContext context, String postId) {
     TextEditingController _commentController = TextEditingController();
