@@ -99,7 +99,7 @@ class ItineraryInfoBottomSheetState extends State<ItineraryInfoBottomSheet> {
               color: Colors.white, // Set font color to white
             ),
           ),
-          Spacer(),
+        
           ElevatedButton(
   onPressed: () {
     Navigator.pushReplacement(

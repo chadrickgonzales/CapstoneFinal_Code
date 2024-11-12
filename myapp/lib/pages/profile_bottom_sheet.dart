@@ -1575,8 +1575,8 @@ Widget _buildLibraryContent(
                                                 .markNeedsBuild();
                                           },
                                           child: SizedBox(
-                                            width: isMinimized ? 70 : 300,
-                                            height: isMinimized ? 70 : 300,
+                                            width: isMinimized ? 70 : 340,
+                                            height: isMinimized ? 70 : 298,
                                             child: Material(
                                               color: Colors.transparent,
                                               child: Column(

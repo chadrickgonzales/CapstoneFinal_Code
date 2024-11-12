@@ -242,8 +242,8 @@ Future<void> _updateDynamicRoute(LatLng newLocation) async {
                 color: Colors.transparent,
                 child: ConstrainedBox(
                   constraints: BoxConstraints(
-                    maxWidth: isMinimized ? 70 : 300,
-                    maxHeight: isMinimized ? 70 : 350,
+                    maxWidth: isMinimized ? 70 : 340,
+                    maxHeight: isMinimized ? 70 : 245,
                   ),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
@@ -276,26 +276,29 @@ Future<void> _updateDynamicRoute(LatLng newLocation) async {
                           child: SizedBox(
                             width: 300,
                             height: 120,
-                            child: RouteInfoBottomSheet(
-                              estimatedTime: estimatedTime,
-                              distance: distance,
-                              destination: toAddress,
-                              routeService: RouteService(
-                                context: context,
-                                mapController: mapController,
-                                markers: markers,
-                                polylines: polylines,
-                                routePoints: routePoints,
-                                apiKey: apiKey,
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(15), // Add border radius here
+                              child: RouteInfoBottomSheet(
+                                estimatedTime: estimatedTime,
+                                distance: distance,
+                                destination: toAddress,
+                                routeService: RouteService(
+                                  context: context,
+                                  mapController: mapController,
+                                  markers: markers,
+                                  polylines: polylines,
+                                  routePoints: routePoints,
+                                  apiKey: apiKey,
+                                ),
+                                onStateCreated:
+                                    (RouteInfoBottomSheetState state) {
+                                  _bottomSheetState = state;
+                                },
+                                onClose: () {
+                                  _removeRouteInfoOverlay();
+                                  _showButton = true;
+                                },
                               ),
-                              onStateCreated:
-                                  (RouteInfoBottomSheetState state) {
-                                _bottomSheetState = state;
-                              },
-                              onClose: () {
-                                _removeRouteInfoOverlay();
-                                _showButton = true;
-                              },
                             ),
                           ),
                         ),
@@ -881,7 +884,7 @@ Future<bool> waitForArrival(LatLng destination) async { // Time in seconds to wa
 
 // Helper function to calculate the distance between two LatLng points
 double _calculateDistance1(LatLng start, LatLng end) {
-  const double earthRadius = 6371000; // Earth's radius in meters
+  const double earthRadius = 6371.0; // Earth's radius in kilometers
 
   double dLat = _degreesToRadians(end.latitude - start.latitude);
   double dLng = _degreesToRadians(end.longitude - start.longitude);
@@ -891,7 +894,8 @@ double _calculateDistance1(LatLng start, LatLng end) {
       sin(dLng / 2) * sin(dLng / 2);
   double c = 2 * atan2(sqrt(a), sqrt(1 - a));
 
-  return earthRadius * c; // Distance in meters
+  double distanceInKm = earthRadius * c; // Distance in kilometers
+  return double.parse(distanceInKm.toStringAsFixed(2)); // Limit to 2 decimal points
 }
 
 // Helper function to convert degrees to radians
