@@ -6,7 +6,7 @@ import 'package:http/http.dart' as http;
 
 
 class LocationService {
-  final String key = 'AIzaSyANC6OfmrgsOcypf8rHrKaVCvvS89kQRMM';
+  final String key = '';
 
 
   

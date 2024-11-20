@@ -25,7 +25,7 @@ class SavedBottomSheet extends StatefulWidget {
 class _SavedBottomSheetState extends State<SavedBottomSheet> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final String googleApiKey =
-      'AIzaSyANC6OfmrgsOcypf8rHrKaVCvvS89kQRMM'; // Replace with your Google API Key
+      ''; // Replace with your Google API Key
 
   bool _showDetails = false;
   Map<String, dynamic>? _selectedPlaceDetails;
@@ -385,7 +385,7 @@ class _PlaceDetailViewState extends State<PlaceDetailView> {
         if (photoReference != null)
           Positioned.fill(
             child: Image.network(
-              'https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=$photoReference&key=AIzaSyANC6OfmrgsOcypf8rHrKaVCvvS89kQRMM',
+              'https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=$photoReference&key=',
               fit: BoxFit.cover,
               height: 200,
               width: 600,
