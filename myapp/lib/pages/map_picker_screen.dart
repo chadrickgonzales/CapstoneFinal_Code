@@ -18,7 +18,7 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
   static const LatLng _defaultLocation =
       LatLng(37.7749, -122.4194); // Default location
   final String _apiKey =
-      ''; // Replace with your API key
+      'AIzaSyANC6OfmrgsOcypf8rHrKaVCvvS89kQRMM'; // Replace with your API key
 
   void _onMapTap(LatLng location) {
     setState(() {
