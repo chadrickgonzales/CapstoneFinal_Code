@@ -1500,8 +1500,8 @@ Widget _buildLibraryContent(
                             Icon(Icons.copy, color: Colors.white),
                             SizedBox(width: 8.0),
                             Text(
-                              clickedListContent.length > 20
-                                  ? '${clickedListContent.substring(0, 20)}...' // Limit to 25 characters with ellipsis
+                              clickedListContent.length > 12
+                                  ? '${clickedListContent.substring(0, 12)}...'
                                   : clickedListContent,
                               style: TextStyle(
                                 color: Colors.white,
@@ -2640,8 +2640,8 @@ Widget _buildLibraryContent(
                             Icon(Icons.copy, color: Colors.white),
                             SizedBox(width: 8.0),
                             Text(
-                              clickedListContent.length > 20
-                                  ? '${clickedListContent.substring(0, 20)}...' // Limit to 25 characters with ellipsis
+                              clickedListContent.length > 12
+                                  ? '${clickedListContent.substring(0, 12)}...'
                                   : clickedListContent,
                               style: TextStyle(
                                 color: Colors.white,
