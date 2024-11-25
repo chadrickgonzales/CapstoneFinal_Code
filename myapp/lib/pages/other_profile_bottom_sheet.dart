@@ -1041,7 +1041,7 @@ Widget _buildLibraryContent(
                                   polylines: polylines,
                                   routePoints: [],
                                   apiKey:
-                                      'AIzaSyANC6OfmrgsOcypf8rHrKaVCvvS89kQRMM',
+                                      'AIzaSyCffo3J5Oo5udtLKhLnR8Bzl2XT7f3CbHk',
                                 );
 
                                 // Create the bottom sheet state variable
@@ -3000,7 +3000,7 @@ Widget _buildAddToListContent(
   final TextEditingController _searchController = TextEditingController();
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final String _apiKey =
-      'AIzaSyANC6OfmrgsOcypf8rHrKaVCvvS89kQRMM'; // Replace with your actual API key
+      'AIzaSyCffo3J5Oo5udtLKhLnR8Bzl2XT7f3CbHk'; // Replace with your actual API key
 
   final String _currentListId = listId;
 
@@ -3024,7 +3024,7 @@ Widget _buildAddToListContent(
 
       // Step 2: If not found in Firestore, fetch from Google Maps API
       const googleApiKey =
-          'AIzaSyANC6OfmrgsOcypf8rHrKaVCvvS89kQRMM'; // Replace with your API key
+          'AIzaSyCffo3J5Oo5udtLKhLnR8Bzl2XT7f3CbHk'; // Replace with your API key
       final url =
           'https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input=$placeName&inputtype=textquery&fields=geometry&key=$googleApiKey';
 
