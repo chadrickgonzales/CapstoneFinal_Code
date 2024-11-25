@@ -22,7 +22,7 @@ void displayBottomSheet_route(
     polylines: polylines,
     routePoints: routePoints,
     apiKey:
-        'AIzaSyANC6OfmrgsOcypf8rHrKaVCvvS89kQRMM', // Replace with your API key
+        'AIzaSyCffo3J5Oo5udtLKhLnR8Bzl2XT7f3CbHk', // Replace with your API key
   );
 
   TextEditingController fromController = TextEditingController();
@@ -44,7 +44,7 @@ void displayBottomSheet_route(
   }
   // Function to fetch related places from Google Maps API
   Future<void> fetchRelatedPlaces(String query, bool isFrom) async {
-    final String googleMapsApiKey = 'AIzaSyANC6OfmrgsOcypf8rHrKaVCvvS89kQRMM';
+    final String googleMapsApiKey = 'AIzaSyCffo3J5Oo5udtLKhLnR8Bzl2XT7f3CbHk';
     final String googleMapsUrl =
         'https://maps.googleapis.com/maps/api/place/textsearch/json?query=$query&key=$googleMapsApiKey';
 
