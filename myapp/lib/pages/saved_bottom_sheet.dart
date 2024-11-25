@@ -25,7 +25,7 @@ class SavedBottomSheet extends StatefulWidget {
 class _SavedBottomSheetState extends State<SavedBottomSheet> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final String googleApiKey =
-      'AIzaSyANC6OfmrgsOcypf8rHrKaVCvvS89kQRMM'; // Replace with your Google API Key
+      'AIzaSyCffo3J5Oo5udtLKhLnR8Bzl2XT7f3CbHk'; // Replace with your Google API Key
 
   bool _showDetails = false;
   Map<String, dynamic>? _selectedPlaceDetails;
